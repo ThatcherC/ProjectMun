@@ -24,7 +24,6 @@ int main(int argc, char **argv){
     printf("Energy (J), radius (m), velocity (m/s), lower bound, upper bound, steps\n\n");
     return 0;
   }
-  printf("%i",argc);
   energy = atof(argv[1]);
   radius = atof(argv[2]);
   velocity = atof(argv[3]);
@@ -34,9 +33,12 @@ int main(int argc, char **argv){
 
   long double dr = (upper-lower)/steps;
   printf("\n");
-  printf("Lower Bound: %Le\n",lower);
-  printf("Upper bound: %Le\n",upper);
-  printf("dr:          %Le\n",dr);
+  printf("Energy:        %Le\n",energy);
+  printf("Ref. Radius:   %Le\n",radius);
+  printf("Ref. velocity: %Le\n\n",velocity);
+  printf("Lower Bound:   %Le\n",lower);
+  printf("Upper bound:   %Le\n",upper);
+  printf("dr:            %Le\n",dr);
   printf("-------------------------\n");
   long double total = 0;
   long double prev = function(lower);
