@@ -14,7 +14,7 @@ double long radius;
 double long velocity;
 
 long double function(double r){
-  return 1/sqrt(2*(-278500+3.5316e12/r - 3135L*3135L*680000L*680000L/(2*r*r)));
+  return 1/sqrt(2*(-energy+3.5316e12/r - velocity*velocity*radius*radius/(2*r*r)));
 }
 
 // integrator lower upper steps
