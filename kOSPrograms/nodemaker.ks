@@ -9,7 +9,6 @@ lock MunPos to Mun:position-Kerbin:position.
 set phase to arctan2(ShipPos:x,ShipPos:z)-arctan2(MunPos:x,MunPos:z).
 
 //dp is difference between current and desired phase
-//replace 105 with calculated phase angle
 set dp to (phase-105).
 
 //make sure this happens in the future not the past
