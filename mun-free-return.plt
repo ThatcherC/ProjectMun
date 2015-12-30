@@ -1,7 +1,7 @@
 #set up
-set xrange [730:900]
-set yrange [.6:2.6]
-set hidden3d
+set xrange [787:900]
+set yrange [.8:2.2]
+set hidden3d front
 set zrange [-2e19:2e19]
 
 set view 0,180,1,1
@@ -47,4 +47,5 @@ vtheta(vp,thetap) = vmr(vp)*cos(thetam(vp,thetap)) + \
 
 
 #THE PLOT
-splot (vt_sqr(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, 0
+splot (vt_sqr(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, 0 with pm3d
+
