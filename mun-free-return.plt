@@ -25,7 +25,7 @@ vmr_sqr(vburn) = vburn*vburn*(1-rpm*rpm/(rsoi*rsoi)) + 2*GMm*(1/rsoi - 1/rpm)
 vmr(vburn) = sqrt(vmr_sqr(vburn))	#Radial velocity @SOI in Mun frame
 
 #rx: altitude of craft upon entry to Kerbin system
-rx(thetam) = sqrt(dm*dm + rsoi*rsoi - 2*dm*rsoi*sin(thetam))
+rx(thetam) = sqrt(dm*dm + rsoi*rsoi + 2*dm*rsoi*sin(thetam))
 
 T(thetam) = 542.5 * rx(thetam)/dm 	#Speed of Kerbin entry point
 
