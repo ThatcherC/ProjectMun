@@ -1,5 +1,7 @@
 //Creates a maneuver node to impact the Mun
 
+declare parameter angle.
+
 //ShipPos and MunPos are the vector positions of the ship and the Mun
 //relative to Kerbin
 lock ShipPos to -Kerbin:position.
@@ -9,8 +11,7 @@ lock MunPos to Mun:position-Kerbin:position.
 set phase to arctan2(ShipPos:x,ShipPos:z)-arctan2(MunPos:x,MunPos:z).
 
 //dp is difference between current and desired phase
-//replace 105 with calculated phase angle
-set dp to (phase-105).
+set dp to (phase-angle).
 
 //make sure this happens in the future not the past
 if dp<0 {
