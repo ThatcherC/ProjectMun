@@ -36,12 +36,12 @@ def_angle(vp) = acos ( -(vp*vp*rpm*rpm - GMm*rsoi)/(vp*vp*rpm*rsoi - GMm*rsoi))
 #kerbin equations
 
 #-------One option for vt_sqr
-vt_sqr(vp,thetap) = vmr_sqr(vp) + vmtheta(vp)**2 + T(thetam(vp,thetap))**2 + \
-	4*vmr(vp)*vmtheta(vp)*cos(thetam(vp,thetap))*sin(thetam(vp,thetap))+ \
-	2*T(thetam(vp,thetap))*(vmr(vp)*cos(thetam(vp,thetap)) +  \
-	vmtheta(vp)*sin(thetam(vp,thetap)))
+#vt_sqr(vp,thetap) = vmr_sqr(vp) + vmtheta(vp)**2 + T(thetam(vp,thetap))**2 + \
+#	4*vmr(vp)*vmtheta(vp)*cos(thetam(vp,thetap))*sin(thetam(vp,thetap))+ \
+#	2*T(thetam(vp,thetap))*(vmr(vp)*cos(thetam(vp,thetap)) +  \
+#	vmtheta(vp)*sin(thetam(vp,thetap)))
 
-vtheta(vp,thetap) = vmr(vp)*cos(thetam(vp,thetap)) + \
+vtheta(vp,thetap) = vmr(vp)*cos(thetam(vp,thetap)) - \
 		    vmtheta(vp)*sin(thetam(vp,thetap)) + \
 		    T(thetam(vp,thetap))
 
