@@ -35,6 +35,7 @@ def_angle(vp) = acos ( -(vp*vp*rpm*rpm - GMm*rsoi)/(vp*vp*rpm*rsoi - GMm*rsoi))
 
 #kerbin equations
 
+#-------One option for vt_sqr
 vt_sqr(vp,thetap) = vmr_sqr(vp) + vmtheta(vp)**2 + T(thetam(vp,thetap))**2 + \
 	4*vmr(vp)*vmtheta(vp)*cos(thetam(vp,thetap))*sin(thetam(vp,thetap))+ \
 	2*T(thetam(vp,thetap))*(vmr(vp)*cos(thetam(vp,thetap)) +  \
@@ -44,8 +45,11 @@ vtheta(vp,thetap) = vmr(vp)*cos(thetam(vp,thetap)) + \
 		    vmtheta(vp)*sin(thetam(vp,thetap)) + \
 		    T(thetam(vp,thetap))
 
+#-------Another option, more modifiable
+vr(vp,thetap) = vmr(vp)*sin(thetam(vp,thetap)) + \
+		    vmtheta(vp)*cos(thetam(vp,thetap))
 
+vt_sqr2(vp,thetap) = vtheta(vp,thetap)**2 + vr(vp,thetap)**2
 
 #THE PLOT
-splot (vt_sqr(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, 0 with pm3d
-
+splot (vt_sqr2(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, 0 with pm3d
