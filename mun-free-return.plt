@@ -22,7 +22,12 @@ rpk = 635000  				#Kerbin's Periapsis
 vmtheta(vburn) = vburn*rpm/rsoi		#Tangential velocity @SOI in Mun frame
 
 vmr_sqr(vburn) = vburn*vburn*(1-rpm*rpm/(rsoi*rsoi)) + 2*GMm*(1/rsoi - 1/rpm)
-vmr(vburn) = sqrt(vmr_sqr(vburn))	#Radial velocity @SOI in Mun frame
+
+E(v) = v*v/2 - GMm/rpm
+
+vmr_sqr3(vburn) = 2*(E(vburn) + GMm/rsoi - vburn*vburn*rpm*rpm/(rsoi*rsoi))
+
+vmr(vburn) = sqrt(vmr_sqr3(vburn))	#Radial velocity @SOI in Mun frame
 
 #rx: altitude of craft upon entry to Kerbin system
 rx(thetam) = sqrt(dm*dm + rsoi*rsoi + 2*dm*rsoi*sin(thetam))
@@ -30,7 +35,7 @@ rx(thetam) = sqrt(dm*dm + rsoi*rsoi + 2*dm*rsoi*sin(thetam))
 T(thetam) = 542.5 * rx(thetam)/dm 	#Speed of Kerbin entry point
 
 thetam(vp,thetap) = thetap + def_angle(vp)
-def_angle(vp) = acos ( -(vp*vp*rpm*rpm - GMm*rsoi)/(vp*vp*rpm*rsoi - GMm*rsoi))
+def_angle(vp) = 3.14159 + .1745 - acos ( -(vp*vp*rpm*rpm - GMm*rsoi)/(vp*vp*rpm*rsoi - GMm*rsoi))
 
 
 #kerbin equations
@@ -53,5 +58,5 @@ vt_sqr2(vp,thetap) = vtheta(vp,thetap)**2 + vr(vp,thetap)**2
 
 #THE PLOT
 splot (vt_sqr2(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, 0 with pm3d, '-' w points ls 2
-890 1.55 10
+880 1.55 10
 e
