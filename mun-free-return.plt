@@ -7,6 +7,9 @@ set yrange [.8:2.2]
 set hidden3d front
 set zrange [-1e19:2e19]
 
+set xlabel "Periapsis speed (m/s)"
+set ylabel "Periapsis angle (radians)"
+
 set view 0,180,1,1
 set isosamples 100
 
