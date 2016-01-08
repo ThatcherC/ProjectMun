@@ -1,11 +1,14 @@
 #set up
-set xrange [787:900]
+set xtics out 2
+set ytics out .1
+
+set xrange [840:900]
 set yrange [.8:2.2]
 set hidden3d front
-set zrange [-2e19:2e19]
+set zrange [-1e19:2e19]
 
 set view 0,180,1,1
-set isosamples 80
+set isosamples 100
 
 #constants
 GMk = 3.5316e12
