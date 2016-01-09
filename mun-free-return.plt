@@ -1,14 +1,19 @@
 #set up
-set xtics out 2
+set terminal png size 1500,1125 crop font "Arial" 18
+unset colorbox
+unset ztics
+unset key
+
+set xtics out 10
 set ytics out .1
 
 set xrange [840:900]
-set yrange [.8:2.2]
+set yrange [.8:1.8]
 set hidden3d front
 set zrange [-1e19:2e19]
 
-set xlabel "Periapsis speed (m/s)"
-set ylabel "Periapsis angle (radians)"
+set xlabel "Periapsis speed (m/s)" offset 0,3
+set ylabel "Periapsis angle\n(radians)" offset -1,0
 
 set view 0,180,1,1
 set isosamples 100
@@ -63,6 +68,6 @@ vr(vp,thetap) = vmr(vp)*sin(thetam(vp,thetap)) + \
 vt_sqr2(vp,thetap) = vtheta(vp,thetap)**2 + vr(vp,thetap)**2
 
 #THE PLOT
-splot (vt_sqr2(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, 0 with pm3d, '-' w points ls 2
+splot (vt_sqr2(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, 0 with pm3d title "", '-' w points ls 2
 880 1.55 10
 e
