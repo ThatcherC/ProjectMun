@@ -2,6 +2,8 @@
 
 declare parameter angle.
 
+declare parameter speed.
+
 lock munangle to arctan2(mun:position:x,mun:position:z)-arctan2((Kerbin:position-mun:position):x,(Kerbin:position-mun:position):z)+90.
 
 set angle to angle*180/3.1415926.
@@ -27,5 +29,5 @@ set dp to dp+360.
 set t to dp/w.
 
 //create the node with the proper delta-v and add it to the map
-set mynode to NODE(time2+t,0,0,100).
+set mynode to NODE(time2+t,0,0,speed).
 add mynode.
