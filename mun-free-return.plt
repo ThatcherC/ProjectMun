@@ -27,7 +27,7 @@ dm = 12000000
 
 #orbital constants
 rpm = 210000				#Mun Periapsis
-rpk = 635000  				#Kerbin's Periapsis
+rpk = 635000  			#Kerbin's Periapsis
 
 #functions
 vmtheta(vburn) = vburn*rpm/rsoi		#Tangential velocity @SOI in Mun frame
@@ -45,8 +45,8 @@ rx(thetam) = sqrt(dm*dm + rsoi*rsoi + 2*dm*rsoi*sin(thetam))
 
 T(thetam) = 542.5 * rx(thetam)/dm 	#Speed of Kerbin entry point
 
-thetam(vp,thetap) = thetap + def_angle(vp)
-def_angle(vp) = 3.14159 + .1745 - acos ( -(vp*vp*rpm*rpm - GMm*rsoi)/(vp*vp*rpm*rsoi - GMm*rsoi))
+thetam(vp,thetap) = thetap + def_angle(vp) + .21465
+def_angle(vp) = 3.14159 - acos ( -(vp*vp*rpm*rpm - GMm*rsoi)/(vp*vp*rpm*rsoi - GMm*rsoi))
 
 
 #kerbin equations
@@ -68,6 +68,5 @@ vr(vp,thetap) = vmr(vp)*sin(thetam(vp,thetap)) + \
 vt_sqr2(vp,thetap) = vtheta(vp,thetap)**2 + vr(vp,thetap)**2
 
 #THE PLOT
-splot (vt_sqr2(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, 0 with pm3d title "", '-' w points ls 2
-880 1.55 10
-e
+splot (vt_sqr2(x,y)-2*GMk/rx(thetam(x,y)))*rpk*rpk + 2*GMk*rpk - vtheta(x,y)**2*rx(thetam(x,y))**2, \
+0 with pm3d title ""
