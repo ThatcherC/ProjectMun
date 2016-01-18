@@ -1,5 +1,5 @@
 #set up
-set terminal png size 1500,1125 crop font "Arial" 18
+#set terminal png size 1500,1125 crop font "Arial" 18
 unset colorbox
 unset ztics
 unset key
@@ -22,12 +22,12 @@ set isosamples 100
 GMk = 3.5316e12
 GMm = 6.5138398e10
 rsoi = 2429559.1
-dm = 12000000
+dm = 12000000.0
 
 
 #orbital constants
-rpm = 210000				#Mun Periapsis
-rpk = 635000  			#Kerbin's Periapsis
+rpm = 210000.0				#Mun Periapsis
+rpk = 635000.0  			#Kerbin's Periapsis
 
 #functions
 vmtheta(vburn) = vburn*rpm/rsoi		#Tangential velocity @SOI in Mun frame
