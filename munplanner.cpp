@@ -30,6 +30,7 @@ double rr;      //Kerbin periapsis inbound
 
 const int kerbinRadius = 600000; //meters
 const int munRadius =    200000;
+const int munAltitude = 12000000;
 const double muKerbin = 3.5316e12; //m^3 s^-2
 const double muMun = 6.5138398e10;
 const double munSOI = 2429559.1;  //meters
@@ -76,6 +77,12 @@ double tfl(double rl, double rt, double theta){
   double beta = 2*asin(sqrt( (s-c)/(2*a) ));
 
   return sqrt(a*a*a/muKerbin) * ( (alpha-sin(alpha)) - (beta-sin(beta)) );
+}
+
+Vector <3,double> MunPosition(double time){
+  double angle = 1.7 + (542.5/munAltitude)*time;
+  Vector< 3, double > p( munAltitude*cos(angle), munAltitude*sin(angle), 0 );
+  return p;
 }
 
 
