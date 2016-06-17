@@ -48,10 +48,10 @@ void setParamters(){
   scanf("%d:%d:%d:%d:%d", &toa[0], &toa[1], &toa[2], &toa[3], &toa[4]);
   printf("Initial Kerbin periapsis (m): ");
   scanf("%d",&p);
-  rl = (double)p;
+  rl = (double)p+kerbinRadius;
   printf("Mun periapsis (m): ");
   scanf("%d", &p);
-  rm = (double)p;
+  rm = (double)p+munRadius;
 
   for(int i = 0; i < 5; i++){
     ta += toSeconds[i] * toa[i];
@@ -65,7 +65,7 @@ double parabolicTime(double rl, double rt){     //return time of flight for para
 
 double semimajor(double rl, double rt, double theta){     //returns a, the semimajor axis
   double num = rl*(rl-rt*cos(theta));
-  double denom = 2*rl-rt*(1-cos(theta));
+  double denom = 2*rl-rt*(1+cos(theta));
   return num/denom;
 }
 
@@ -75,7 +75,13 @@ double tfl(double rl, double rt, double theta){
   const double s = .5*(rl+rt+c);
   const double alpha = 2*asin(sqrt(s/(2*a)));
   const double beta = 2*asin(sqrt( (s-c)/(2*a) ));
-
+/*
+  printf("-\ta : %f\n",a);
+  printf("-\tc : %f\n",c);
+  printf("-\ts : %f\n",s);
+  printf("-\talpha : %f\n",alpha);
+  printf("-\tbeta : %f\n",beta);
+*/
   return sqrt(a*a*a/muKerbin) * ( (alpha-sin(alpha)) - (beta-sin(beta)) );
 }
 
@@ -124,8 +130,12 @@ int main(){
   //Choose an r_T and a t_F, then find the trajectory
   double rt = sqrt(munAltitude*munAltitude + munSOI*munSOI);    //arbitrary rt
   double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
+  double theta = 3.1;                                           //guess
 
-
+  for(int x = 0; x< 10; x++){
+    printf("%f\n",theta);
+    theta = theta + (tf-tfl(rl,rt,theta))/delTfl(rl,rt,theta);
+  }
 
   printf("\n");
   return 0;
