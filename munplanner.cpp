@@ -28,9 +28,9 @@ double ir = 0;
 double rl;      //Kerbin periapsis outbound
 double rr;      //Kerbin periapsis inbound
 
-const int kerbinRadius = 600000; //meters
-const int munRadius =    200000;
-const int munAltitude = 12000000;
+const double kerbinRadius = 600000; //meters
+const double munRadius =    200000;
+const double munAltitude = 12000000;
 const double muKerbin = 3.5316e12; //m^3 s^-2
 const double muMun = 6.5138398e10;
 const double munSOI = 2429559.1;  //meters
@@ -70,26 +70,62 @@ double semimajor(double rl, double rt, double theta){     //returns a, the semim
 }
 
 double tfl(double rl, double rt, double theta){
-  double a = semimajor(rl,rt,theta);
-  double c = sqrt(rl*rl+rt*rt-2*rl*rt*cos(theta));
-  double s = .5*(rl+rt+c);
-  double alpha = 2*asin(sqrt(s/(2*a)));
-  double beta = 2*asin(sqrt( (s-c)/(2*a) ));
+  const double a = semimajor(rl,rt,theta);
+  const double c = sqrt(rl*rl+rt*rt-2*rl*rt*cos(theta));
+  const double s = .5*(rl+rt+c);
+  const double alpha = 2*asin(sqrt(s/(2*a)));
+  const double beta = 2*asin(sqrt( (s-c)/(2*a) ));
 
   return sqrt(a*a*a/muKerbin) * ( (alpha-sin(alpha)) - (beta-sin(beta)) );
 }
 
-Vector <3,double> MunPosition(double time){
+double delS(double rl, double rt, double theta){
+  const double c = sqrt(rl*rl+rt*rt-2*rl*rt*cos(theta));
+  return rl*rt*sin(theta)/(2*c);
+}
+
+double delAOverA(double rl, double rt, double theta){
+  double a = semimajor(rl, rt, theta);
+  double c2 = rl*rl+rt*rt-2*rl*rt*cos(theta);
+
+  double num = -2*rt*(a-rl)*sin(theta);
+  double denom = rl*rl+c2-rt*rt;
+
+  return num/denom;
+}
+
+
+double delTfl(double rl, double rt, double theta){
+  const double a = semimajor(rl,rt,theta);
+  const double c = sqrt(rl*rl+rt*rt-2*rl*rt*cos(theta));
+  const double s = .5*(rl+rt+c);
+  const double alpha = 2*asin(sqrt(s/(2*a)));
+  const double beta = 2*asin(sqrt( (s-c)/(2*a) ));
+
+  double dtfl = 3*tfl(rl,rt,theta)*delAOverA(rl,rt,theta)/2;
+  dtfl += sqrt(a/muKerbin)*( tan(alpha/2)*(delS(rl,rt,theta) - s*delAOverA(rl,rt,theta)) +
+                             tan(beta/2) *(delS(rl,rt,theta) + (s-c)*delAOverA(rl,rt,theta)));
+  return dtfl;
+}
+
+vmml::vector < 3, double > MunPosition(double time){
   double angle = 1.7 + (542.5/munAltitude)*time;
-  Vector< 3, double > p( munAltitude*cos(angle), munAltitude*sin(angle), 0 );
+  vmml::vector< 3, double > p( munAltitude*cos(angle), munAltitude*sin(angle), 0 );
   return p;
 }
 
 
 int main(){
+  //Set up
   printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
-
   setParamters();
+
+  //Step one
+  //Choose an r_T and a t_F, then find the trajectory
+  double rt = sqrt(munAltitude*munAltitude + munSOI*munSOI);    //arbitrary rt
+  double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
+
+
 
   printf("\n");
   return 0;
