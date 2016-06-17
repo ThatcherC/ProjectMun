@@ -5,8 +5,10 @@
 #include "stdlib.h"
 #include <string>
 
+#include <vmmlib/vector.hpp>
+#include <vmmlib/math.hpp>
 
-// g++ munplanner.cpp -o munplanner -std=c++0x
+// g++ munplanner.cpp -I ./ -o munplanner -std=c++0x
 
 using namespace std;
 
@@ -53,10 +55,11 @@ void setParamters(){
   for(int i = 0; i < 5; i++){
     ta += toSeconds[i] * toa[i];
   }
+  printf("\n----------------------------\n");
 }
 
-double parabolicTime(rl, rt){     //return time of flight for parabolic trajectory
-  return 1/3 * sqrt(2*(rt-rl)/muKerbin) * (rt+2*rl);
+double parabolicTime(double rl, double rt){     //return time of flight for parabolic trajectory
+  return 1.0/3.0 * sqrt(2*(rt-rl)/muKerbin) * (rt+2*rl);
 }
 
 double semimajor(double rl, double rt, double theta){     //returns a, the semimajor axis
@@ -65,12 +68,14 @@ double semimajor(double rl, double rt, double theta){     //returns a, the semim
   return num/denom;
 }
 
-double tfl(rl, rt, theta){
-  double a =
-  double alpha =
-  double beta =
-  double s =
-  double c = 
+double tfl(double rl, double rt, double theta){
+  double a = semimajor(rl,rt,theta);
+  double c = sqrt(rl*rl+rt*rt-2*rl*rt*cos(theta));
+  double s = .5*(rl+rt+c);
+  double alpha = 2*asin(sqrt(s/(2*a)));
+  double beta = 2*asin(sqrt( (s-c)/(2*a) ));
+
+  return sqrt(a*a*a/muKerbin) * ( (alpha-sin(alpha)) - (beta-sin(beta)) );
 }
 
 
@@ -79,6 +84,6 @@ int main(){
 
   setParamters();
 
-  printf("\n")
+  printf("\n");
   return 0;
 }
