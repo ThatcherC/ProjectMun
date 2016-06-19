@@ -34,7 +34,7 @@ const double munAltitude = 12000000;
 const double muKerbin = 3.5316e12; //m^3 s^-2
 const double muMun = 6.5138398e10;
 const double munSOI = 2429559.1;  //meters
-
+const vmml::vector<3,double> i (0,0,1);           //inclination vector - just z for 0 inclination
 
 void setParamters(){
   int toa[5];
@@ -130,6 +130,57 @@ vmml::vector <3, double> munVelocity(double time){
   return p;
 }
 
+struct MunIntercept{
+  vmml::vector<3,double> Rt;
+  vmml::vector<3,double> Rtm;
+  vmml::vector<3,double> Vt;
+  vmml::vector<3,double> Vtm;
+};
+
+
+MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
+  vmml::vector<3,double> Rtm;
+  vmml::vector<3,double> Vt;
+  vmml::vector<3,double> Vtm;
+
+  double a;
+  double e;
+  double p;
+
+  MunIntercept intercept;
+
+  //Step 1:
+  //Choose an r_T and a t_F, then find the trajectory
+  Rtm = Rt - munPosition(toa);
+
+  double rt = Rt.length();                                       //arbitrary rt
+  double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
+  double theta = 3.1;                                           //guess
+
+  for(int x = 0; x< 10; x++){
+    //printf("%f\n",theta);
+    theta = theta + (tf-tfl(rl,rt,theta))/delTfl(rl,rt,theta);
+  }
+  a = semimajor(rl,rt, theta);
+  e = 1-rl/a;                     //eccentricity
+  //solved for all necessary orbital parameters
+
+  //Step 2:
+  //Find R_tm and V_tm - already have Rtm
+  p = a*(1-e*e);
+
+  Vt = 1.0/rt * (sqrt(muKerbin/p)*e*sin(theta)*Rt + sqrt(muKerbin*p)/rt * i.cross(Rt) );
+  Vtm = Vt-munVelocity(ta);
+
+  intercept.Rt = Rt;
+  intercept.Rtm = Rtm;
+  intercept.Vt = Vt;
+  intercept.Vtm = Vtm;
+
+  return intercept;
+}
+
+
 //X_y, Xy : vector
 //x_y, xy : magnitude of same vector
 
@@ -138,46 +189,33 @@ int main(){
   printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
   setParamters();
 
-  vmml::vector<3,double> Rt;
-  vmml::vector<3,double> Rtm;
-  vmml::vector<3,double> Vt;
-  vmml::vector<3,double> Vtm;
+  MunIntercept I1;
+  vmml::vector<3,double> Ra;
 
   //Step 3:
   //Iterate over angles to guess a good starting intercept angle
-  const double RAguessingThreshold = 20000.0*5.0/3.0*1000.0 * munRadius/1737000.0 *0.8;//time .8 for extra good guess
+  const double RAguessingThreshold = 20000.0*5.0/3.0*1000.0 * munRadius/1737000.0 *0.5;//time .8 for extra good guess
 
-  for(double phi = 0; phi < 1.7; phi += .1){
+  double phi;
+  for(phi = 0; phi < 1.7; phi += .1){
     printf("Phi: %f\n",phi);
-    //Step 1:
-    //Choose an r_T and a t_F, then find the trajectory
-    Rt = munPosition(ta);
-    Rtm = {-munSOI*sin(munAngle(ta)+phi), munSOI*cos(munAngle(ta)+phi), 0 };
-    Rt = Rt+Rtm;
 
-    double rt = Rt.length();                                       //arbitrary rt
-    double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
-    double theta = 3.1;                                           //guess
+    vmml::vector<3,double> RtGuess (-munSOI*sin(munAngle(ta)+phi), munSOI*cos(munAngle(ta)+phi), 0 );
+    RtGuess = RtGuess + munPosition(ta);
+    I1 = getIntercept(rl,RtGuess,ta);
 
-    for(int x = 0; x< 10; x++){
-      //printf("%f\n",theta);
-      theta = theta + (tf-tfl(rl,rt,theta))/delTfl(rl,rt,theta);
-    }
-    double a = semimajor(rl,rt, theta);
-    double e = 1-rl/a;                     //eccentricity
-    //solved for all necessary orbital parameters
-
-    //Step 2:
-    //Find R_tm and V_tm - already have Rtm
-    double p = a*(1-e*e);
-
-    vmml::vector<3,double> i (0,0,1);           //inclination vector - just z for 0 inclination
-    Vt = 1.0/rt * (sqrt(muKerbin/p)*e*sin(theta)*Rt + sqrt(muKerbin*p)/rt * i.cross(Rt) );
-    Vtm = Vt-munVelocity(ta);
-    //printf("\t- Intercept speed: %f\n",Vtm.length());
-
-    vmml::vector<3,double> Ra = Rtm - Rtm.dot(Vtm)/Vtm.dot(Vtm) * Vtm;
+    Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
     //printf("\t-R_a: %f\n", Ra.length());
+    if(Ra.length()<RAguessingThreshold){
+      break;
+    }
+  }
+
+  for(int x=0; x<6; x++){
+    printf("%d: Ra = %f\n",x,Ra.length());
+    I1.Rt = munPosition(ta) - munSOI * I1.Vtm/I1.Vtm.length();
+    I1 = getIntercept(rl,I1.Rt,ta);
+    Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
   }
 
   printf("\n");
