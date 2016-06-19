@@ -138,34 +138,47 @@ int main(){
   printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
   setParamters();
 
-  //Step 1:
-  //Choose an r_T and a t_F, then find the trajectory
-  vmml::vector<3,double> Rt = munPosition(ta);
-  vmml::vector<3,double> Rtm(-munSOI*sin(munAngle(ta)), munSOI*cos(munAngle(ta)), 0 );
-  Rt = Rt+Rtm;
-
-  double rt = Rt.length();                                       //arbitrary rt
-  double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
-  double theta = 3.1;                                           //guess
-
-  for(int x = 0; x< 10; x++){
-    printf("%f\n",theta);
-    theta = theta + (tf-tfl(rl,rt,theta))/delTfl(rl,rt,theta);
-  }
-  double a = semimajor(rl,rt, theta);
-  double e = 1-rl/a;                     //eccentricity
-  //solved for all necessary orbital parameters
-
-  //Step 2:
-  //Find R_tm and V_tm - already have Rtm
-  double p = a*(1-e*e);
-  vmml::vector<3,double> i (0,0,1);           //inclination vector - just z for 0 inclination
+  vmml::vector<3,double> Rt;
+  vmml::vector<3,double> Rtm;
   vmml::vector<3,double> Vt;
-  Vt = 1.0/rt * (sqrt(muKerbin/p)*e*sin(theta)*Rt + sqrt(muKerbin*p)/rt * i.cross(Rt) );
-  vmml::vector<3,double> Vtm = Vt-munVelocity(ta);
-  printf("Intercept speed: %f\n",Vtm.length());
-  double rmCalculated = -a*(e-1);
-  printf("Periapsis distance: %f\n", rmCalculated);
+  vmml::vector<3,double> Vtm;
+
+  //Step 3:
+  //Iterate over angles to guess a good starting intercept angle
+  const double RAguessingThreshold = 20000.0*5.0/3.0*1000.0 * munRadius/1737000.0 *0.8;//time .8 for extra good guess
+
+  for(double phi = 0; phi < 1.7; phi += .1){
+    printf("Phi: %f\n",phi);
+    //Step 1:
+    //Choose an r_T and a t_F, then find the trajectory
+    Rt = munPosition(ta);
+    Rtm = {-munSOI*sin(munAngle(ta)+phi), munSOI*cos(munAngle(ta)+phi), 0 };
+    Rt = Rt+Rtm;
+
+    double rt = Rt.length();                                       //arbitrary rt
+    double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
+    double theta = 3.1;                                           //guess
+
+    for(int x = 0; x< 10; x++){
+      //printf("%f\n",theta);
+      theta = theta + (tf-tfl(rl,rt,theta))/delTfl(rl,rt,theta);
+    }
+    double a = semimajor(rl,rt, theta);
+    double e = 1-rl/a;                     //eccentricity
+    //solved for all necessary orbital parameters
+
+    //Step 2:
+    //Find R_tm and V_tm - already have Rtm
+    double p = a*(1-e*e);
+
+    vmml::vector<3,double> i (0,0,1);           //inclination vector - just z for 0 inclination
+    Vt = 1.0/rt * (sqrt(muKerbin/p)*e*sin(theta)*Rt + sqrt(muKerbin*p)/rt * i.cross(Rt) );
+    Vtm = Vt-munVelocity(ta);
+    //printf("\t- Intercept speed: %f\n",Vtm.length());
+
+    vmml::vector<3,double> Ra = Rtm - Rtm.dot(Vtm)/Vtm.dot(Vtm) * Vtm;
+    //printf("\t-R_a: %f\n", Ra.length());
+  }
 
   printf("\n");
   return 0;
