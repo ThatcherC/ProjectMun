@@ -114,21 +114,37 @@ double delTfl(double rl, double rt, double theta){
   return dtfl;
 }
 
-vmml::vector < 3, double > MunPosition(double time){
-  double angle = 1.7 + (542.5/munAltitude)*time;
+double munAngle(double time){
+  return 1.7 + (542.5/munAltitude)*time;
+}
+
+vmml::vector < 3, double > munPosition(double time){
+  double angle = munAngle(time);
   vmml::vector< 3, double > p( munAltitude*cos(angle), munAltitude*sin(angle), 0 );
   return p;
 }
 
+vmml::vector <3, double> munVelocity(double time){
+  double angle = munAngle(time);
+  vmml::vector<3, double> p(-542.5*sin(angle), 542.5*cos(angle), 0 );
+  return p;
+}
+
+//X_y, Xy : vector
+//x_y, xy : magnitude of same vector
 
 int main(){
   //Set up
   printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
   setParamters();
 
-  //Step one
+  //Step 1:
   //Choose an r_T and a t_F, then find the trajectory
-  double rt = sqrt(munAltitude*munAltitude + munSOI*munSOI);    //arbitrary rt
+  vmml::vector<3,double> Rt = munPosition(ta);
+  vmml::vector<3,double> Rtm(-munSOI*sin(munAngle(ta)), munSOI*cos(munAngle(ta)), 0 );
+  Rt = Rt+Rtm;
+
+  double rt = Rt.length();                                       //arbitrary rt
   double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
   double theta = 3.1;                                           //guess
 
@@ -136,6 +152,20 @@ int main(){
     printf("%f\n",theta);
     theta = theta + (tf-tfl(rl,rt,theta))/delTfl(rl,rt,theta);
   }
+  double a = semimajor(rl,rt, theta);
+  double e = 1-rl/a;                     //eccentricity
+  //solved for all necessary orbital parameters
+
+  //Step 2:
+  //Find R_tm and V_tm - already have Rtm
+  double p = a*(1-e*e);
+  vmml::vector<3,double> i (0,0,1);           //inclination vector - just z for 0 inclination
+  vmml::vector<3,double> Vt;
+  Vt = 1.0/rt * (sqrt(muKerbin/p)*e*sin(theta)*Rt + sqrt(muKerbin*p)/rt * i.cross(Rt) );
+  vmml::vector<3,double> Vtm = Vt-munVelocity(ta);
+  printf("Intercept speed: %f\n",Vtm.length());
+  double rmCalculated = -a*(e-1);
+  printf("Periapsis distance: %f\n", rmCalculated);
 
   printf("\n");
   return 0;
