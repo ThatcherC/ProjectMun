@@ -137,6 +137,22 @@ struct MunIntercept{
   vmml::vector<3,double> Vtm;
 };
 
+struct Orbit{
+  double a;       //semimajor axis
+  double e;       //eccentricity
+  double p;       //parameter
+};
+
+Orbit getOrbit(double rl, vmml::vector<3,double> Rt, double theta){
+  Orbit out;
+
+  out.a = semimajor(rl,Rt.length(), theta);
+  out.e = 1-rl/out.a;                     //eccentricity
+  out.p = out.a*(1-out.e*out.e);
+
+  return out;
+}
+
 
 MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
   vmml::vector<3,double> Rtm;
@@ -148,6 +164,7 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
   double p;
 
   MunIntercept intercept;
+  Orbit traj;
 
   //Step 1:
   //Choose an r_T and a t_F, then find the trajectory
@@ -161,15 +178,15 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
     //printf("%f\n",theta);
     theta = theta + (tf-tfl(rl,rt,theta))/delTfl(rl,rt,theta);
   }
-  a = semimajor(rl,rt, theta);
-  e = 1-rl/a;                     //eccentricity
+
+  traj = getOrbit(rl,Rt,theta);
+
   //solved for all necessary orbital parameters
 
   //Step 2:
   //Find R_tm and V_tm - already have Rtm
-  p = a*(1-e*e);
 
-  Vt = 1.0/rt * (sqrt(muKerbin/p)*e*sin(theta)*Rt + sqrt(muKerbin*p)/rt * i.cross(Rt) );
+  Vt = 1.0/rt * (sqrt(muKerbin/traj.p)*traj.e*sin(theta)*Rt + sqrt(muKerbin*traj.p)/rt * i.cross(Rt) );
   Vtm = Vt-munVelocity(ta);
 
   intercept.Rt = Rt;
