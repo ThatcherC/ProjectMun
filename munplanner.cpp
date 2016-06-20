@@ -153,15 +153,21 @@ Orbit getOrbit(double rl, vmml::vector<3,double> Rt, double theta){
   return out;
 }
 
+Orbit getOrbit(double _rl, MunIntercept intercept){
+  Orbit out;
+
+  out.a = 1.0/(-intercept.Vt.dot(intercept.Vt)/muKerbin + 2/intercept.Rt.length());
+  out.e = 1-_rl/out.a;                     //eccentricity
+  out.p = out.a*(1-out.e*out.e);
+
+  return out;
+}
+
 
 MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
   vmml::vector<3,double> Rtm;
   vmml::vector<3,double> Vt;
   vmml::vector<3,double> Vtm;
-
-  double a;
-  double e;
-  double p;
 
   MunIntercept intercept;
   Orbit traj;
@@ -207,6 +213,7 @@ int main(){
   setParamters();
 
   MunIntercept I1;
+  Orbit O1;
   vmml::vector<3,double> Ra;
 
   //Step 3:
@@ -234,6 +241,11 @@ int main(){
     I1 = getIntercept(rl,I1.Rt,ta);
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
   }
+
+  O1 = getOrbit(rl,I1);
+  //Vis-viva equation:
+  printf("a: %f\n", O1.a);
+  printf("v: %f\n",sqrt(muKerbin * (2/rl-1/O1.a)));
 
   printf("\n");
   return 0;
