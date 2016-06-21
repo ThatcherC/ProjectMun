@@ -53,6 +53,8 @@ void setParamters(){
   scanf("%d", &p);
   rm = (double)p+munRadius;
 
+  toa[0] = toa[0]-1;
+  toa[1] = toa[1]-1;
   for(int i = 0; i < 5; i++){
     ta += toSeconds[i] * toa[i];
   }
@@ -75,13 +77,7 @@ double tfl(double rl, double rt, double theta){
   const double s = .5*(rl+rt+c);
   const double alpha = 2*asin(sqrt(s/(2*a)));
   const double beta = 2*asin(sqrt( (s-c)/(2*a) ));
-/*
-  printf("-\ta : %f\n",a);
-  printf("-\tc : %f\n",c);
-  printf("-\ts : %f\n",s);
-  printf("-\talpha : %f\n",alpha);
-  printf("-\tbeta : %f\n",beta);
-*/
+
   return sqrt(a*a*a/muKerbin) * ( (alpha-sin(alpha)) - (beta-sin(beta)) );
 }
 
@@ -135,11 +131,20 @@ struct MunIntercept{
   vmml::vector<3,double> Rtm;
   vmml::vector<3,double> Vt;
   vmml::vector<3,double> Vtm;
+  double tfl;
+  double toa;
+  double theta;
 };
 
+
+//2D Orbit type
 struct Orbit{
   double a;       //semimajor axis
   double e;       //eccentricity
+
+  double aop;     //angle of periapsis
+  double time;    //time of periapsis
+
   double p;       //parameter
 };
 
@@ -150,15 +155,23 @@ Orbit getOrbit(double rl, vmml::vector<3,double> Rt, double theta){
   out.e = 1-rl/out.a;                     //eccentricity
   out.p = out.a*(1-out.e*out.e);
 
+  out.aop = atan2(Rt[1],Rt[0])-theta;
+
   return out;
 }
 
+//Returns a fully specified orbit with the time of periapsis and burn
+//Only works for zero inclination orbits.
 Orbit getOrbit(double _rl, MunIntercept intercept){
   Orbit out;
 
   out.a = 1.0/(-intercept.Vt.dot(intercept.Vt)/muKerbin + 2/intercept.Rt.length());
   out.e = 1-_rl/out.a;                     //eccentricity
   out.p = out.a*(1-out.e*out.e);
+
+  out.aop = atan2(intercept.Rt[1],intercept.Rt[0])-intercept.theta;
+
+  out.time = intercept.toa-intercept.tfl;
 
   return out;
 }
@@ -199,6 +212,9 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
   intercept.Rtm = Rtm;
   intercept.Vt = Vt;
   intercept.Vtm = Vtm;
+  intercept.toa = toa;
+  intercept.tfl = tfl(rl,rt,theta);
+  intercept.theta = theta;
 
   return intercept;
 }
@@ -222,8 +238,6 @@ int main(){
 
   double phi;
   for(phi = 0; phi < 1.7; phi += .1){
-    printf("Phi: %f\n",phi);
-
     vmml::vector<3,double> RtGuess (-munSOI*sin(munAngle(ta)+phi), munSOI*cos(munAngle(ta)+phi), 0 );
     RtGuess = RtGuess + munPosition(ta);
     I1 = getIntercept(rl,RtGuess,ta);
