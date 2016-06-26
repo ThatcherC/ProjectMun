@@ -1,5 +1,4 @@
 declare parameter a.
-declare parameter e.      //may be unnecessary
 declare parameter angle.  //angle of periapsis relative to +x
 declare parameter timeTMI.   //time of insertion burn
 
@@ -15,18 +14,28 @@ function mod{     //computes n%d
   return mod(n-d,d).
 }
 
-//wait until we reach correct angle
-lock shipangle to ship:orbit:lan+ship:orbit:argumentofperiapsis+ship:orbit:trueanomaly.
-set waitangle to mod(angle-mod(shipangle,360)+360,360).
-set waitangle to waitangle*constant:degtorad.
+set angle to angle*constant:radtodeg.
 
-print "Warping to proper angle...".
-warpto(time:seconds + waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 10).
+//wait until we reach correct angle
+lock shipangle to ship:orbit:lan+ship:orbit:argumentofperiapsis+ship:orbit:trueanomaly.     //in degrees
+set waitangle to mod(angle-mod(shipangle,360)+360,360).                                     //in degrees
+set waitangle to waitangle*constant:degtorad.                                               //in radians
+
+print "Warping to proper angle (waiting " + (waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 15) +"s)".
+
+warpto(time:seconds + waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 15).
+wait waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 10.
+
 print "...Done".
 wait 2.
 
+print "Desired angle: "+angle.
+print "Current angle: "+mod(shipangle,360).
 wait until mod(shipangle,360)>=angle.
 print "Reached proper angle.".
+print "Desired angle: "+angle.
+print "Current angle: "+mod(shipangle,360).
+
 
 set period to ship:orbit:period.
 set TMIwait to timeTMI-time:seconds.
@@ -48,8 +57,9 @@ add node1.
 
 print "Warping to timing burn...".
 WARPTO(timeTMI-period-deltaT-30).
+wait until time:seconds>(timeTMI-period-deltaT-30).
 print "...Done".
-print "".
+
 lock steering to ship:prograde.
 
 //work out burn time eqn
