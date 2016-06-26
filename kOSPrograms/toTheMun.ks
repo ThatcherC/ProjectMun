@@ -5,17 +5,35 @@ declare parameter timeTMI.   //time of insertion burn
 
 //current version assumes circular orbit with 0 inclination
 
-set period to ORBIT:PERIOD.
+function mod{     //computes n%d
+  parameter n.
+  parameter d.
+
+  if n-d<0{
+    return n.
+  }
+  return mod(n-d,d).
+}
+
+//wait until we reach correct angle
+lock shipangle to ship:orbit:lan+ship:orbit:argumentofperiapsis+ship:orbit:trueanomaly.
+set waitangle to mod(angle-mod(shipangle,360)+360,360).
+set waitangle to waitangle*constant:degtorad.
+warpto(time:seconds + waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 10).
+
+wait until mod(shipangle,360)>=angle.
+
+set period to ship:orbit:period.
 set TMIwait to timeTMI-time:seconds.
-set deltaT to TMIwait%period.
+set deltaT to mod(TMIwait,period).
 
 //work out math for delta-v for timing burn
 //use vis-viva eqn and orbital period equation
 
-periV = sqrt(muKerbin(2/ORBIT:periapsis - 1/ORBIT:A)).
-newV = sqrt(muKerbin*(2/ORBIT:periapsishiehgt - (muKerbin*period^2/4/constant:PI^2)^(1/3))).
+set periV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius) - 1/ship:orbit:semimajoraxis)).
+set newV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius) - (kerbin:mu*period^2/4/constant:PI^2)^(1/3))).
 
-deltaV1 = newV-periV.
+set deltaV1 to newV-periV.
 set node1 to node(timeTMI-period-deltaT,0,0,deltaV1).
 add node1.
 
@@ -54,7 +72,7 @@ WARPTO(timeTMI-60).
 lock steering to ship:prograde.
 
 
-[x] 2. Approach desired periapsis angle
-[ ] 3. Perform burn so that craft returns to periapsis at t_a-tfl
-[ ] 4. Wait until periapsis
-[ ] 5. Burn so that velocity matches calculated value
+//[x] 2. Approach desired periapsis angle
+//[ ] 3. Perform burn so that craft returns to periapsis at t_a-tfl
+//[ ] 4. Wait until periapsis
+//[ ] 5. Burn so that velocity matches calculated value
