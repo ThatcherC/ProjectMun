@@ -259,6 +259,9 @@ int main(){
   O1 = getOrbit(rl,I1);
   //Vis-viva equation:
   printf("a: %f\n", O1.a);
+  printf("e: %f\n", O1.e);
+  printf("AoP: %f\n", O1.aop+2*3.141592653);
+  printf("ToP: %f\n", O1.time);
   printf("v: %f\n",sqrt(muKerbin * (2/rl-1/O1.a)));
 
   printf("\n");
