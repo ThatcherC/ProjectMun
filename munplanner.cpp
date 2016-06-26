@@ -265,7 +265,7 @@ int main(){
   printf("AoP: %f\n", O1.aop+2*3.141592653);
   printf("ToP: %f\n", O1.time);
   printf("v: %f\n",sqrt(muKerbin * (2/rl-1/O1.a)));
-  printf("\n run tothemun(%f, %f, %f)",O1.a,O1.aop+2*3.141592653,O1.time);
+  printf("\nrun tothemun(%f, %f, %f)\n",O1.a,O1.aop+2*3.141592653,O1.time);
 
   printf("\n");
   return 0;
