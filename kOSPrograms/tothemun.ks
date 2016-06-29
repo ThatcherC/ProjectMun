@@ -2,7 +2,7 @@ declare parameter a.
 declare parameter angle.  //angle of periapsis relative to +x
 declare parameter timeTMI.   //time of insertion burn
 
-run once nextnode.
+run once executenode.
 
 function mod{     //computes n%d
   parameter n.
@@ -62,7 +62,7 @@ WARPTO(timeTMI-period-deltaT-30).
 wait until time:seconds>(timeTMI-period-deltaT-30).
 print "...Done".
 
-nextnode().
+executenode().
 
 
 
@@ -70,7 +70,7 @@ nextnode().
 
 WARPTO(timeTMI-60).
 
-nextnode().
+executenode().
 
 
 //[x] 2. Approach desired periapsis angle

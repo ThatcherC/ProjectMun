@@ -1,6 +1,6 @@
 global nodeNumber = 1.
 
-function nextnode{
+function executenode{
   print "------ Executing Node #"+nodeNumber +"------".
   set nd to nextnode().
 
