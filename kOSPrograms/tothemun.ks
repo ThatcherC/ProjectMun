@@ -44,13 +44,16 @@ set deltaT to mod(TMIwait,period).
 //use vis-viva eqn and orbital period equation
 
 set periV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius) - 1/ship:orbit:semimajoraxis)).
-
-set newV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius)-(kerbin:mu*(period+deltaT)^2/4/constant:PI^2)^(-1/3))).
+set timingV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius)-(kerbin:mu*(period+deltaT)^2/4/constant:PI^2)^(-1/3))).
+set transferV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius) - 1/a)).
 
 print "Creating timing burn node...".
-set deltaV1 to newV-periV.
+set deltaV1 to timingV-periV.
+set deltaV2 to transferV-timingV.
 set node1 to node(timeTMI-period-deltaT,0,0,deltaV1).
+set node2 to node(timeTMI,0,0,deltaV2).
 add node1.
+add node2.
 
 //-------Timing burn----------
 
@@ -63,8 +66,8 @@ print "Lock steering to prograde...".
 lock steering to ship:prograde.
 
 //work out burn time eqn
-list engines in a.
-set eng to a[0].
+list engines in englist.
+set eng to englist[0].
 
 eng:activate().
 print "Engine Isp: "+eng:isp.
@@ -89,7 +92,7 @@ lock throttle to 0.
 
 unlock steering.
 wait 5.
-//remove node1.
+remove node1.
 
 //-------TMI burn-----------
 
