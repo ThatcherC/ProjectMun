@@ -59,23 +59,30 @@ print "Warping to timing burn...".
 WARPTO(timeTMI-period-deltaT-30).
 wait until time:seconds>(timeTMI-period-deltaT-30).
 print "...Done".
+print "Lock steering to prograde...".
 
 lock steering to ship:prograde.
 
 //work out burn time eqn
 list engines in a.
 set eng to a[0].
+
+print "Engine Isp: "+eng:isp.
+
 set i to eng:isp*9.81.
 set f to eng:maxthrust/i.
 
 set m0 to SHIP:MASS.
-set m2 to m0*e^(i/deltaV1).
+set m2 to m0*constant:e^(i/deltaV1).
 set m1 to sqrt(m0*m2).
 
 set t0 to (m0-m1)/f.
 set t1 to (m1-m2)/f.
 
-eng:activate().
+print "tO = " + t0.
+print "t1 = " + t1.
+
+eng:shutdown().
 wait until time:seconds >= timeTMI-period-deltaT-t0.
 lock throttle to 1.
 wait until time:seconds >= timeTMI-period-deltaT+t1.
