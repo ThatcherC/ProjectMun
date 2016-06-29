@@ -1,17 +1,21 @@
 # ProjectMun
-Applying physics to a mission to the Mun in Kerbal Space Program. Most of the information will be on my blog, 
+Applying physics to a mission to the Mun in Kerbal Space Program. Most of the information will be on my blog,
 but all the relevant programs will be kept here.
 
-###Integrators
+###Mission Planning
 
-It turns out there are some nasty integrals to solve if one wants to fly to the Mun, so I'll use a computer to integrate 
-for me. Right now there's only one program:
+The algorithm for finding a nice lunar trajectory is complicated, so I chose to
+implement it in C++ rather than kOS language. I have one program to work out the
+orbits:
 
-* *integrator.cpp* - This program solves the differential equation that will tell the amount of time a rocket will take to travel from one heigh to another given certain orbital parameters.
+* *munplanner.cpp* - This program executes a version of Richard Battin's method
+for finding a lunar free return trajectory. The method is taken from his book,
+*An Introduction to the Mathematics and Methods of Astrodynamics, Revised Edition*.
 
 ###Autopilots
 
-I will also be using kOS programs to perform all the necessary maneuvers once all the calculations are finished. 
+I will also be using kOS programs to perform all the necessary maneuvers once all the calculations are finished.
 The kOS mod allows rockets in the game to programmed, allowing much more precise control than I could manage myself.
 
-*[none yet!]*
+* *tothemun.ks* - Takes the output from munplanner.cpp and executes a series of burns
+to enter into the orbit munplanner chooses.
