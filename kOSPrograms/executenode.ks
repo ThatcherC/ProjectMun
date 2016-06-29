@@ -1,8 +1,8 @@
-global nodeNumber = 1.
+global nodeNumber is 1.
 
 function executenode{
   print "------ Executing Node #"+nodeNumber +"------".
-  set nd to nextnode().
+  set nd to nextnode.
 
   lock steering to nd:deltav.
   set dv to nd:deltav:mag.
@@ -35,5 +35,6 @@ function executenode{
 
   unlock steering.
   wait 5.
-  remove node1.
+  remove nd.
+  set nodeNumber to nodeNumber+1.
 }
