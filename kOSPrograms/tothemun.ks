@@ -82,7 +82,6 @@ set t1 to (m1-m2)/f.
 print "tO = " + t0.
 print "t1 = " + t1.
 
-eng:shutdown().
 wait until time:seconds >= timeTMI-period-deltaT-t0.
 lock throttle to 1.
 wait until time:seconds >= timeTMI-period-deltaT+t1.
