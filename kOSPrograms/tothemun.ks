@@ -23,11 +23,10 @@ set waitangle to waitangle*constant:degtorad.                                   
 
 print "Warping to proper angle (waiting " + (waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 15) +"s)".
 
-warpto(time:seconds + waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 15).
+warpto(time:seconds + waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 10).
 wait waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 10.
 
 print "...Done".
-wait 2.
 
 print "Desired angle: "+angle.
 print "Current angle: "+mod(shipangle,360).
@@ -67,13 +66,14 @@ lock steering to ship:prograde.
 list engines in a.
 set eng to a[0].
 
+eng:activate().
 print "Engine Isp: "+eng:isp.
 
 set i to eng:isp*9.81.
 set f to eng:maxthrust/i.
 
 set m0 to SHIP:MASS.
-set m2 to m0*constant:e^(i/deltaV1).
+set m2 to m0*constant:e^(-deltaV1/i).
 set m1 to sqrt(m0*m2).
 
 set t0 to (m0-m1)/f.
