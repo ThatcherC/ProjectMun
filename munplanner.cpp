@@ -14,19 +14,19 @@ using namespace std;
 
 /*
 Things needed:
-[ ] Mun's position as function of time
-[ ] vector math
-[ ] time of flight orbit solver
-[ ] position and velocity of orbit at a time - hodograph, vis viva?
+[x] Mun's position as function of time
+[x] vector math
+[x] time of flight orbit solver
+[x] position and velocity of orbit at a time - hodograph, vis viva?
 [ ] six parameters
 */
 
-double rm;      //mun periapsis
-double ta = 0;      //time of arrival
-double il = 0;
-double ir = 0;
-double rl;      //Kerbin periapsis outbound
-double rr;      //Kerbin periapsis inbound
+double desired_rm;      //mun periapsis
+double desired_ta = 0;      //time of arrival
+double desired_il = 0;
+double desired_ir = 0;
+double desired_rl;      //Kerbin periapsis outbound
+double desired_rr;      //Kerbin periapsis inbound
 
 const double kerbinRadius = 600000; //meters
 const double munRadius =    200000;
@@ -46,17 +46,23 @@ void setParamters(){
 
   printf("Time of arrival (y:d:h:m:s): ");
   scanf("%d:%d:%d:%d:%d", &toa[0], &toa[1], &toa[2], &toa[3], &toa[4]);
+
   printf("Initial Kerbin periapsis (m): ");
   scanf("%d",&p);
-  rl = (double)p+kerbinRadius;
+  desired_rl = (double)p+kerbinRadius;
+
+  printf("Kerbin return periapsis (m): ");
+  scanf("%d",&p);
+  desired_rr = (double)p+kerbinRadius;
+
   printf("Mun periapsis (m): ");
   scanf("%d", &p);
-  rm = (double)p+munRadius;
+  desired_rm = (double)p+munRadius;
 
   toa[0] = toa[0]-1;
   toa[1] = toa[1]-1;
   for(int i = 0; i < 5; i++){
-    ta += toSeconds[i] * toa[i];
+    desired_ta += toSeconds[i] * toa[i];
   }
   printf("\n----------------------------\n");
 }
@@ -177,7 +183,7 @@ Orbit getOrbit(double _rl, MunIntercept intercept){
 }
 
 
-MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
+MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, double tf){
   vmml::vector<3,double> Rtm;
   vmml::vector<3,double> Vt;
   vmml::vector<3,double> Vtm;
@@ -190,7 +196,8 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
   Rtm = Rt - munPosition(toa);
 
   double rt = Rt.length();                                       //arbitrary rt
-  double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
+  //Now passing tf as function parameter
+  //double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
   double theta = 3.1;                                           //guess
 
   for(int x = 0; x< 10; x++){
@@ -206,41 +213,33 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa){
   //Find R_tm and V_tm - already have Rtm
 
   Vt = 1.0/rt * (sqrt(muKerbin/traj.p)*traj.e*sin(theta)*Rt + sqrt(muKerbin*traj.p)/rt * i.cross(Rt) );
-  Vtm = Vt-munVelocity(ta);
+  Vtm = Vt-munVelocity(desired_ta);
 
   intercept.Rt = Rt;
   intercept.Rtm = Rtm;
   intercept.Vt = Vt;
   intercept.Vtm = Vtm;
   intercept.toa = toa;
+  //is this tfl the same as tf? test
   intercept.tfl = tfl(rl,rt,theta);
   intercept.theta = theta;
 
   return intercept;
 }
 
-
-//X_y, Xy : vector
-//x_y, xy : magnitude of same vector
-
-int main(){
-  //Set up
-  printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
-  setParamters();
-
+Orbit findOrbit(double periapsis, double toa, double tof){
   MunIntercept I1;
-  Orbit O1;
   vmml::vector<3,double> Ra;
 
   //Step 3:
   //Iterate over angles to guess a good starting intercept angle
-  const double RAguessingThreshold = 20000.0*5.0/3.0*1000.0 * munRadius/1737000.0 *0.5;//time .8 for extra good guess
+  const double RAguessingThreshold = 20000.0*5.0/3.0*1000.0 * munRadius/1737000.0 *0.5;//times .5 for extra good guess
 
   double phi;
   for(phi = 0; phi < 1.7; phi += .1){
-    vmml::vector<3,double> RtGuess (-munSOI*sin(munAngle(ta)+phi), munSOI*cos(munAngle(ta)+phi), 0 );
-    RtGuess = RtGuess + munPosition(ta);
-    I1 = getIntercept(rl,RtGuess,ta);
+    vmml::vector<3,double> RtGuess (-munSOI*sin(munAngle(toa)+phi), munSOI*cos(munAngle(toa)+phi), 0 );
+    RtGuess = RtGuess + munPosition(toa);
+    I1 = getIntercept(periapsis,RtGuess,toa,tof);
 
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
     //printf("\t-R_a: %f\n", Ra.length());
@@ -251,12 +250,53 @@ int main(){
 
   for(int x=0; x<6; x++){
     //printf("%d: Ra = %f\n",x,Ra.length());
-    I1.Rt = munPosition(ta) - munSOI * I1.Vtm/I1.Vtm.length();
-    I1 = getIntercept(rl,I1.Rt,ta);
+    I1.Rt = munPosition(toa) - munSOI * I1.Vtm/I1.Vtm.length();
+    I1 = getIntercept(periapsis,I1.Rt,toa,tof);
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
   }
 
-  O1 = getOrbit(rl,I1);
+  return getOrbit(desired_rl,I1);
+}
+
+double getMunSOItime(double v){
+  double a_h = 1.0/(v*v/muMun - 2.0/munSOI);
+  //What is rm? desired_rm?? Check section 9.1
+  double sineNu = 1.0/(1+desired_rm/a_h);
+  double H = acosh((1+munSOI/a_h)*sineNu);
+  double t = 2*sqrt(a_h*a_h*a_h/muMun)*(sinh(H)/sineNu - H);
+  return t;
+}
+
+//X_y, Xy : vector
+//x_y, xy : magnitude of same vector
+
+int main(){
+  //Set up
+  printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
+  setParamters();
+
+  //Contains steps 1,2,3
+
+  //Estimate for tfl - just has to be greater that parabolic time
+  //Keeping tfl in main scope is important because it must be varied later
+  //Might want to keep Rtm and other variable out here as well
+  double t_fl = 1.2*parabolicTime(rl, munAltitude+munSOI);
+  Orbit O1 = findOrbit(desired_rl, desired_ta, t_fl);   //tof variable is unused - expose later!
+
+  //Step 4: Get ToF through Mun SOI
+  //Need Vtm and Rtm
+  double tSOI = getMunSOItime([speed wrt mun]);
+
+  //Step 5: find return orbit
+  //findOrbit will need some modifications to accomodate a return trajectory
+  Orbit O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
+
+  //Step 6: Vary t_fr so that Munar entry and exit velocities match
+  //(loop over previous steps)
+  //Need to extend findOrbit and related functions to accept a ToF arg
+
+  //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
+
 
   printf("\n-------Results:--------\n");
 
@@ -264,7 +304,7 @@ int main(){
   printf("e: %f\n", O1.e);
   printf("AoP: %f\n", O1.aop+2*3.141592653);
   printf("ToP: %f\n", O1.time);
-  printf("v: %f\n",sqrt(muKerbin * (2/rl-1/O1.a)));
+  printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O1.a)));
   printf("\nrun tothemun(%f, %f, %f).\n",O1.a,O1.aop+2*3.141592653,O1.time);
 
   printf("\n");
