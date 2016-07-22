@@ -152,6 +152,8 @@ struct Orbit{
   double time;    //time of periapsis
 
   double p;       //parameter
+
+  MunIntercept intercept;
 };
 
 Orbit getOrbit(double rl, vmml::vector<3,double> Rt, double theta){
@@ -234,6 +236,7 @@ Orbit findOrbit(double periapsis, double toa, double tof){
   //Step 3:
   //Iterate over angles to guess a good starting intercept angle
   const double RAguessingThreshold = 20000.0*5.0/3.0*1000.0 * munRadius/1737000.0 *0.5;//times .5 for extra good guess
+  //printf("Ra threshold: %f\n",RAguessingThreshold);
 
   double phi;
   for(phi = 0; phi < 1.7; phi += .1){
@@ -248,14 +251,16 @@ Orbit findOrbit(double periapsis, double toa, double tof){
     }
   }
 
-  for(int x=0; x<6; x++){
+  for(int x=0; x<14; x++){
     //printf("%d: Ra = %f\n",x,Ra.length());
     I1.Rt = munPosition(toa) - munSOI * I1.Vtm/I1.Vtm.length();
     I1 = getIntercept(periapsis,I1.Rt,toa,tof);
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
   }
 
-  return getOrbit(desired_rl,I1);
+  Orbit O1 = getOrbit(desired_rl,I1);
+  O1.intercept = I1;
+  return O1;
 }
 
 double getMunSOItime(double v){
@@ -275,25 +280,42 @@ int main(){
   printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
   setParamters();
 
-  //Contains steps 1,2,3
+  double t_fl = 1.2*parabolicTime(desired_rl, munAltitude+munSOI);
+  double t_fr = 1.2*parabolicTime(desired_rr, munAltitude+munSOI);
+  Orbit O1;
+  Orbit O2;
 
   //Estimate for tfl - just has to be greater that parabolic time
   //Keeping tfl in main scope is important because it must be varied later
   //Might want to keep Rtm and other variable out here as well
-  double t_fl = 1.2*parabolicTime(rl, munAltitude+munSOI);
-  Orbit O1 = findOrbit(desired_rl, desired_ta, t_fl);   //tof variable is unused - expose later!
+  O1 = findOrbit(desired_rl, desired_ta, t_fl);   //tof variable is unused - expose later!
 
   //Step 4: Get ToF through Mun SOI
   //Need Vtm and Rtm
-  double tSOI = getMunSOItime([speed wrt mun]);
-
-  //Step 5: find return orbit
-  //findOrbit will need some modifications to accomodate a return trajectory
-  Orbit O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
+  double tSOI = 10000;//getMunSOItime([speed wrt mun]);
 
   //Step 6: Vary t_fr so that Munar entry and exit velocities match
-  //(loop over previous steps)
-  //Need to extend findOrbit and related functions to accept a ToF arg
+  for(int x = 0; x< 10; x++){
+
+    //Step 5: find return orbit
+    //findOrbit will need some modifications to accomodate a return trajectory
+    O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
+    printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+
+    if(abs(O1.intercept.Vtm.length()-O2.intercept.Vtm.length())<20){
+      break;
+    }
+
+    t_fr += 1200;
+  }
+  for(int x = 0; x < 10; x++){
+    double deriv = findOrbit(desired_rr, desired_ta+tSOI, t_fr+1).intercept.Vtm.length()-O2.intercept.Vtm.length();
+
+    t_fr = t_fr + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
+    O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
+
+    printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+  }
 
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
 
@@ -305,7 +327,13 @@ int main(){
   printf("AoP: %f\n", O1.aop+2*3.141592653);
   printf("ToP: %f\n", O1.time);
   printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O1.a)));
-  printf("\nrun tothemun(%f, %f, %f).\n",O1.a,O1.aop+2*3.141592653,O1.time);
+  printf("\nrun tothemun(%f, %f, %f).\n\n",O1.a,O1.aop+2*3.141592653,O1.time);
+
+  printf("a: %f\n", O2.a);
+  printf("e: %f\n", O2.e);
+  printf("AoP: %f\n", O2.aop+2*3.141592653);
+  printf("ToP: %f\n", O2.time);
+  printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O2.a)));
 
   printf("\n");
   return 0;
