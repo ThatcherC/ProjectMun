@@ -272,6 +272,14 @@ double getMunSOItime(double v){
   return t;
 }
 
+double getMunRm(MunIntercept munBound, MunIntercept earthBound){
+  double nu = asin( munBound.Vtm.cross(earthBound.Vtm).length() / munBound.Vtm.squared_length())/2;
+  //printf("Deflection angle: %f\n", nu);
+  double a_h = 1.0/(munBound.Vtm.squared_length()/muMun - 2.0/munSOI);
+  //printf("A_h: %f\n", a_h);
+  return a_h * (1.0/sin(nu) - 1);
+}
+
 //X_y, Xy : vector
 //x_y, xy : magnitude of same vector
 
@@ -286,37 +294,43 @@ int main(){
   Orbit O1;
   Orbit O2;
 
-  O1 = findOrbit(desired_rl, desired_ta, t_fl);   //tof variable is unused - expose later!
-
-  //Step 4: Get ToF through Mun SOI
-  //Need Vtm and Rtm
-  double tSOI = getMunSOItime(O1.intercept.Vtm.length());
-  printf("Mun SOI time: %f\n", tSOI);
-
-  //Step 6: Vary t_fr so that Munar entry and exit velocities match
-  for(int x = 0; x< 10; x++){
-
-    //Step 5: find return orbit
-    //findOrbit will need some modifications to accomodate a return trajectory
-    O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
-    //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
-
-    if(abs(O1.intercept.Vtm.length()-O2.intercept.Vtm.length())<20){
-      break;
-    }
-
-    t_fr += 1200;
-  }
-  for(int x = 0; x < 4; x++){
-    double deriv = findOrbit(desired_rr, desired_ta+tSOI, t_fr+1).intercept.Vtm.length()-O2.intercept.Vtm.length();
-
-    t_fr = t_fr + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
-    O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
-
-    printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
-  }
 
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
+  for(int c = 0; c< 10; c++){
+    O1 = findOrbit(desired_rl, desired_ta, t_fl);   //tof variable is unused - expose later!
+
+    t_fl += 1200;
+
+    //Step 4: Get ToF through Mun SOI
+    //Need Vtm and Rtm
+    double tSOI = getMunSOItime(O1.intercept.Vtm.length());
+    printf("Mun SOI time: %f\n", tSOI);
+
+    //Step 6: Vary t_fr so that Munar entry and exit velocities match
+    for(int x = 0; x< 10; x++){
+
+      //Step 5: find return orbit
+      //findOrbit will need some modifications to accomodate a return trajectory
+      O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
+      //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+
+      if(abs(O1.intercept.Vtm.length()-O2.intercept.Vtm.length())<20){
+        break;
+      }
+
+      t_fr += 1200;
+    }
+    for(int x = 0; x < 4; x++){
+      double deriv = findOrbit(desired_rr, desired_ta+tSOI, t_fr+1).intercept.Vtm.length()-O2.intercept.Vtm.length();
+
+      t_fr = t_fr + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
+      O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
+
+      //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+    }
+
+    printf("Calculated R_m: %f\n\n", getMunRm(O1.intercept, O2.intercept));
+  }
 
 
   printf("\n-------Results:--------\n");
