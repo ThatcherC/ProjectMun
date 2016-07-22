@@ -280,19 +280,18 @@ int main(){
   printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
   setParamters();
 
+  //Estimate for tfl - just has to be greater that parabolic time
   double t_fl = 1.2*parabolicTime(desired_rl, munAltitude+munSOI);
   double t_fr = 1.2*parabolicTime(desired_rr, munAltitude+munSOI);
   Orbit O1;
   Orbit O2;
 
-  //Estimate for tfl - just has to be greater that parabolic time
-  //Keeping tfl in main scope is important because it must be varied later
-  //Might want to keep Rtm and other variable out here as well
   O1 = findOrbit(desired_rl, desired_ta, t_fl);   //tof variable is unused - expose later!
 
   //Step 4: Get ToF through Mun SOI
   //Need Vtm and Rtm
-  double tSOI = 10000;//getMunSOItime([speed wrt mun]);
+  double tSOI = getMunSOItime(O1.intercept.Vtm.length());
+  printf("Mun SOI time: %f\n", tSOI);
 
   //Step 6: Vary t_fr so that Munar entry and exit velocities match
   for(int x = 0; x< 10; x++){
@@ -300,7 +299,7 @@ int main(){
     //Step 5: find return orbit
     //findOrbit will need some modifications to accomodate a return trajectory
     O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
-    printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+    //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
 
     if(abs(O1.intercept.Vtm.length()-O2.intercept.Vtm.length())<20){
       break;
@@ -308,7 +307,7 @@ int main(){
 
     t_fr += 1200;
   }
-  for(int x = 0; x < 10; x++){
+  for(int x = 0; x < 4; x++){
     double deriv = findOrbit(desired_rr, desired_ta+tSOI, t_fr+1).intercept.Vtm.length()-O2.intercept.Vtm.length();
 
     t_fr = t_fr + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
