@@ -114,7 +114,7 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
   //Step 2:
   //Find R_tm and V_tm - already have Rtm
 
-  //This might be adaptable if angle -> 2*PI-angle
+  //This might be adaptable if angle -> 2*PI-angle [true assuming we want hit a periapsis, which we do]
   //Comes from IttMaMoA pg. 445
   Vt = 1.0/rt * (sqrt(muKerbin/traj.p)*traj.e*sin(angle)*Rt + sqrt(muKerbin*traj.p)/rt * i.cross(Rt) );
   Vtm = Vt-munVelocity(toa);
