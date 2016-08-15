@@ -1,5 +1,3 @@
-
-
 const double kerbinRadius = 600000; //meters
 const double munRadius =    200000;
 const double munAltitude = 12000000;
@@ -8,6 +6,9 @@ const double muMun = 6.5138398e10;
 const double munSOI = 2429559.1;  //meters
 const vmml::vector<3,double> i (0,0,1);           //inclination vector - just z for 0 inclination
 
+const int OUTBOUND = 0;
+const int INBOUND = 1;
+const double pi = 3.141592653;
 
 struct MunIntercept{
   vmml::vector<3,double> Rt;
@@ -25,7 +26,7 @@ struct Orbit{
   double a;       //semimajor axis
   double e;       //eccentricity
 
-  double aop;     //angle of periapsis
+  double aop;     //angle between periapsis and mun
   double time;    //time of periapsis
 
   double p;       //parameter
