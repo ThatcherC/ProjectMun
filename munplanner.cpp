@@ -93,7 +93,7 @@ Orbit getOrbit(double _rl, MunIntercept intercept){
 //This function is very likely known to work for outbound
 //Returns the position and velocity conditions at the Munar patch point
 //Assumes an outbound trajectory
-MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, double angle){
+MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, double angle, int situation){
   vmml::vector<3,double> Rtm;
   vmml::vector<3,double> Vt;
   vmml::vector<3,double> Vtm;
@@ -116,6 +116,10 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
 
   //This might be adaptable if angle -> 2*PI-angle [true assuming we want hit a periapsis, which we do]
   //Comes from IttMaMoA pg. 445
+
+  //should change angle for inbound orbits
+  angle = angle - situation*(2*angle);
+
   Vt = 1.0/rt * (sqrt(muKerbin/traj.p)*traj.e*sin(angle)*Rt + sqrt(muKerbin*traj.p)/rt * i.cross(Rt) );
   Vtm = Vt-munVelocity(toa);
 
@@ -132,7 +136,11 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
 }
 
 //Returns an orbit from Kerbin to Mun ending in the Mun's center
-Orbit findOrbitOutbound(double periapsis, double toa, double angle){
+//TODO: Adapt for inbound
+/*      - Change phi limits
+        -
+*/
+Orbit findOrbit(double periapsis, double toa, double angle, int situation){
   MunIntercept I1;
   vmml::vector<3,double> Ra;
 
@@ -141,14 +149,15 @@ Orbit findOrbitOutbound(double periapsis, double toa, double angle){
   const double RAguessingThreshold = 20000.0*5.0/3.0*1000.0 * munRadius/1737000.0 *0.5;//times .5 for extra good guess
 
   double phi;
-  for(phi = 0; phi < 1.57; phi += .1){
+  //check one quarter of SOI for outbound, check other half for inbound
+  for(phi = 0+situation*1.57; phi < 1.57+situation*1.57; phi += .1){
     //Intercept point relative to Mun
     vmml::vector<3,double> RtGuess (-munSOI*sin( munAngle(toa)+phi ), munSOI*cos( munAngle(toa)+phi ), 0 );
 
     RtGuess = RtGuess + munPosition(toa);
 
 
-    I1 = getIntercept(periapsis, RtGuess, toa, angle);
+    I1 = getIntercept(periapsis, RtGuess, toa, angle, situation);
 
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
     printf("Phi: %f  R_a: %f\n", phi, Ra.length());
@@ -159,9 +168,9 @@ Orbit findOrbitOutbound(double periapsis, double toa, double angle){
 
   //TODO: This might be wayyy to many iterations
   for(int x=0; x<14; x++){
-    //printf("%d: Ra = %f\n",x,Ra.length());
+    printf("%d: Ra = %f\n",x,Ra.length());
     I1.Rt = munPosition(toa) - munSOI * I1.Vtm/I1.Vtm.length();
-    I1 = getIntercept(periapsis, I1.Rt, toa, angle);
+    I1 = getIntercept(periapsis, I1.Rt, toa, angle, situation);
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
   }
 
@@ -206,6 +215,13 @@ int main(){
   Orbit O1;
   Orbit O2;
 
+  O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
+  printVector(O1.intercept.Vtm);
+  printf("\n Return Orbit: \n");
+  O2 = findOrbit(desired_rr, desired_ta+10000, thetaFR, INBOUND);
+  printVector(O2.intercept.Vtm);
+
+  /*
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
   for(int c = 0; c< 10; c++){
     O1 = findOrbit(desired_rl, desired_ta, thetaFL);
@@ -241,16 +257,16 @@ int main(){
     printf("Calculated R_m: %f\n\n", getMunRm(O1.intercept, O2.intercept));
   }
 
-
+*/
 
   printf("\n-------Results:--------\n");
 
   printf("a: %f\n", O1.a);
   printf("e: %f\n", O1.e);
-  printf("AoP: %f\n", O1.aop+2*3.141592653);
+  printf("AoP: %f\n", O1.aop+2*pi);
   printf("ToP: %f\n", O1.time);
   printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O1.a)));
-  printf("\nrun tothemun(%f, %f, %f).\n\n",O1.a,O1.aop+2*3.141592653,O1.time);
+  printf("\nrun tothemun(%f, %f, %f).\n\n",O1.a,O1.aop+2*pi,O1.time);
 
   printf("\n");
   return 0;
