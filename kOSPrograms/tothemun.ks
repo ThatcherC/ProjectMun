@@ -2,7 +2,7 @@ declare parameter a.
 declare parameter angle.  //angle of periapsis relative to +x
 declare parameter timeTMI.   //time of insertion burn
 
-//current version assumes circular orbit with 0 inclination
+run once executenode.
 
 function mod{     //computes n%d
   parameter n.
@@ -13,6 +13,8 @@ function mod{     //computes n%d
   }
   return mod(n-d,d).
 }
+
+//current version assumes circular orbit with 0 inclination
 
 set angle to angle*constant:radtodeg.
 
@@ -40,9 +42,7 @@ set period to ship:orbit:period.
 set TMIwait to timeTMI-time:seconds.
 set deltaT to mod(TMIwait,period).
 
-//work out math for delta-v for timing burn
-//use vis-viva eqn and orbital period equation
-
+//Use vis-viva eqn and orbital period eqn to work out timing burn and transfer burn
 set periV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius) - 1/ship:orbit:semimajoraxis)).
 set timingV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius)-(kerbin:mu*(period+deltaT)^2/4/constant:PI^2)^(-1/3))).
 set transferV to sqrt(kerbin:mu*(2/(ship:orbit:periapsis+kerbin:radius) - 1/a)).
@@ -61,43 +61,16 @@ print "Warping to timing burn...".
 WARPTO(timeTMI-period-deltaT-30).
 wait until time:seconds>(timeTMI-period-deltaT-30).
 print "...Done".
-print "Lock steering to prograde...".
 
-lock steering to ship:prograde.
+executenode().
 
-//work out burn time eqn
-list engines in englist.
-set eng to englist[0].
 
-eng:activate().
-print "Engine Isp: "+eng:isp.
-
-set i to eng:isp*9.81.
-set f to eng:maxthrust/i.
-
-set m0 to SHIP:MASS.
-set m2 to m0*constant:e^(-deltaV1/i).
-set m1 to sqrt(m0*m2).
-
-set t0 to (m0-m1)/f.
-set t1 to (m1-m2)/f.
-
-print "tO = " + t0.
-print "t1 = " + t1.
-
-wait until time:seconds >= timeTMI-period-deltaT-t0.
-lock throttle to 1.
-wait until time:seconds >= timeTMI-period-deltaT+t1.
-lock throttle to 0.
-
-unlock steering.
-wait 5.
-remove node1.
 
 //-------TMI burn-----------
 
 WARPTO(timeTMI-60).
-lock steering to ship:prograde.
+
+executenode().
 
 
 //[x] 2. Approach desired periapsis angle
