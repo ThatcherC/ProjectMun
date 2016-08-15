@@ -125,6 +125,7 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
   return intercept;
 }
 
+//Returns an orbit from Kerbin to Mun ending in the Mun's center
 Orbit findOrbitOutbound(double periapsis, double toa, double angle){
   MunIntercept I1;
   vmml::vector<3,double> Ra;
@@ -132,7 +133,6 @@ Orbit findOrbitOutbound(double periapsis, double toa, double angle){
   //Step 3:
   //Iterate over angles to guess a good starting intercept angle
   const double RAguessingThreshold = 20000.0*5.0/3.0*1000.0 * munRadius/1737000.0 *0.5;//times .5 for extra good guess
-  //printf("Ra threshold: %f\n",RAguessingThreshold);
 
   double phi;
   for(phi = 0; phi < 1.57; phi += .1){
@@ -151,6 +151,7 @@ Orbit findOrbitOutbound(double periapsis, double toa, double angle){
     }
   }
 
+  //TODO: This might be wayyy to many iterations
   for(int x=0; x<14; x++){
     //printf("%d: Ra = %f\n",x,Ra.length());
     I1.Rt = munPosition(toa) - munSOI * I1.Vtm/I1.Vtm.length();
@@ -194,7 +195,7 @@ int main(){
   setParamters();
 
   //Estimate for burnout-Mun angle
-  double thetaFL = 2.5;
+  double thetaFL = 3.0;
   double thetaFR = 2.5;
   Orbit O1;
   Orbit O2;
@@ -202,12 +203,10 @@ int main(){
   O1 = findOrbitOutbound(desired_rl, desired_ta, thetaFL);
 
 
-  /*
+
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
   for(int c = 0; c< 10; c++){
     O1 = findOrbit(desired_rl, desired_ta, thetaFL);
-
-    t_fl += 1200;
 
     //Step 4: Get ToF through Mun SOI
     //Need Vtm and Rtm
@@ -239,7 +238,7 @@ int main(){
 
     printf("Calculated R_m: %f\n\n", getMunRm(O1.intercept, O2.intercept));
   }
-  */
+
 
 
   printf("\n-------Results:--------\n");
