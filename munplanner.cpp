@@ -32,8 +32,8 @@ void setParamters(){
 
   int p = 0;
 
-  printf("Time of arrival (y:d:h:m:s): ");
-  scanf("%d:%d:%d:%d:%d", &toa[0], &toa[1], &toa[2], &toa[3], &toa[4]);
+  //printf("Time of arrival (y:d:h:m:s): ");
+  //scanf("%d:%d:%d:%d:%d", &toa[0], &toa[1], &toa[2], &toa[3], &toa[4]);
 
   printf("Initial Kerbin periapsis (m): ");
   scanf("%d",&p);
@@ -47,11 +47,14 @@ void setParamters(){
   scanf("%d", &p);
   desired_rm = (double)p+munRadius;
 
+  /*
   toa[0] = toa[0]-1;
   toa[1] = toa[1]-1;
   for(int i = 0; i < 5; i++){
     desired_ta += toSeconds[i] * toa[i];
   }
+  */
+  desired_ta = 0;
   printf("\n----------------------------\n");
 }
 
@@ -67,7 +70,7 @@ Orbit getOrbit(double rl, vmml::vector<3,double> Rt, double theta){
 
   return out;
 }
-
+/*
 //Returns a fully specified orbit with the time of periapsis and burn
 //Only works for zero inclination orbits.
 Orbit getOrbit(double _rl, MunIntercept intercept){
@@ -83,10 +86,10 @@ Orbit getOrbit(double _rl, MunIntercept intercept){
 
   return out;
 }
-
+*/
 
 //This function is very likely known to work
-MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, double tf){
+MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, double angle){
   vmml::vector<3,double> Rtm;
   vmml::vector<3,double> Vt;
   vmml::vector<3,double> Vtm;
@@ -99,23 +102,15 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
   Rtm = Rt - munPosition(toa);
 
   double rt = Rt.length();                                       //arbitrary rt
-  //Now passing tf as function parameter
-  //double tf = 1.2*parabolicTime(rl, rt);                        //tf must be greater than parabolic time
-  double theta = 3.1;                                           //guess
 
-  for(int x = 0; x< 10; x++){
-    //printf("%f\n",theta);
-    theta = theta + (tf-tfl(rl,rt,theta))/delTfl(rl,rt,theta);
-  }
-
-  traj = getOrbit(rl,Rt,theta);
+  traj = getOrbit(rl,Rt,angle);
 
   //solved for all necessary orbital parameters
 
   //Step 2:
   //Find R_tm and V_tm - already have Rtm
 
-  Vt = 1.0/rt * (sqrt(muKerbin/traj.p)*traj.e*sin(theta)*Rt + sqrt(muKerbin*traj.p)/rt * i.cross(Rt) );
+  Vt = 1.0/rt * (sqrt(muKerbin/traj.p)*traj.e*sin(angle)*Rt + sqrt(muKerbin*traj.p)/rt * i.cross(Rt) );
   Vtm = Vt-munVelocity(desired_ta);
 
   intercept.Rt = Rt;
@@ -124,13 +119,13 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
   intercept.Vtm = Vtm;
   intercept.toa = toa;
   //is this tfl the same as tf? test
-  intercept.tfl = tfl(rl,rt,theta);
-  intercept.theta = theta;
+  intercept.tfl = tfl(rl,rt,angle);
+  intercept.theta = angle;
 
   return intercept;
 }
 
-Orbit findOrbit(double periapsis, double toa, double tof){
+Orbit findOrbitOutbound(double periapsis, double toa, double angle){
   MunIntercept I1;
   vmml::vector<3,double> Ra;
 
@@ -140,10 +135,14 @@ Orbit findOrbit(double periapsis, double toa, double tof){
   //printf("Ra threshold: %f\n",RAguessingThreshold);
 
   double phi;
-  for(phi = 0; phi < 3.14; phi += .2){
-    vmml::vector<3,double> RtGuess (-munSOI*sin(munAngle(toa)+phi), munSOI*cos(munAngle(toa)+phi), 0 );
+  for(phi = 0; phi < 1.57; phi += .1){
+    //Intercept point relative to Mun
+    vmml::vector<3,double> RtGuess (-munSOI*sin( munAngle(toa)+phi ), munSOI*cos( munAngle(toa)+phi ), 0 );
+
     RtGuess = RtGuess + munPosition(toa);
-    I1 = getIntercept(periapsis,RtGuess,toa,tof);
+
+
+    I1 = getIntercept(periapsis, RtGuess, toa, angle);
 
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
     printf("Phi: %f  R_a: %f\n", phi, Ra.length());
@@ -155,11 +154,11 @@ Orbit findOrbit(double periapsis, double toa, double tof){
   for(int x=0; x<14; x++){
     //printf("%d: Ra = %f\n",x,Ra.length());
     I1.Rt = munPosition(toa) - munSOI * I1.Vtm/I1.Vtm.length();
-    I1 = getIntercept(periapsis,I1.Rt,toa,tof);
+    I1 = getIntercept(periapsis, I1.Rt, toa, angle);
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
   }
 
-  Orbit O1 = getOrbit(desired_rl,I1);
+  Orbit O1 = getOrbit(desired_rl, I1.Rt, angle);
   O1.intercept = I1;
   return O1;
 }
@@ -181,24 +180,32 @@ double getMunRm(MunIntercept munBound, MunIntercept earthBound){
   return a_h * (1.0/sin(nu) - 1);
 }
 
+void printVector(vmml::vector<3,double> v){
+  printf("x: %f   y: %f\n", v[0], v[1]);
+}
+
 //X_y, Xy : vector
 //x_y, xy : magnitude of same vector
+
 
 int main(){
   //Set up
   printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
   setParamters();
 
-  //Estimate for tfl - just has to be greater that parabolic time
-  double t_fl = 1.2*parabolicTime(desired_rl, munAltitude+munSOI);
-  double t_fr = 1.2*parabolicTime(desired_rr, munAltitude+munSOI);
+  //Estimate for burnout-Mun angle
+  double thetaFL = 2.5;
+  double thetaFR = 2.5;
   Orbit O1;
   Orbit O2;
 
+  O1 = findOrbitOutbound(desired_rl, desired_ta, thetaFL);
 
+
+  /*
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
   for(int c = 0; c< 10; c++){
-    O1 = findOrbit(desired_rl, desired_ta, t_fl);   //tof variable is unused - expose later!
+    O1 = findOrbit(desired_rl, desired_ta, thetaFL);
 
     t_fl += 1200;
 
@@ -232,6 +239,7 @@ int main(){
 
     printf("Calculated R_m: %f\n\n", getMunRm(O1.intercept, O2.intercept));
   }
+  */
 
 
   printf("\n-------Results:--------\n");
@@ -242,12 +250,6 @@ int main(){
   printf("ToP: %f\n", O1.time);
   printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O1.a)));
   printf("\nrun tothemun(%f, %f, %f).\n\n",O1.a,O1.aop+2*3.141592653,O1.time);
-
-  printf("a: %f\n", O2.a);
-  printf("e: %f\n", O2.e);
-  printf("AoP: %f\n", O2.aop+2*3.141592653);
-  printf("ToP: %f\n", O2.time);
-  printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O2.a)));
 
   printf("\n");
   return 0;
