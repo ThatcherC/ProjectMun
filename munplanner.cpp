@@ -200,10 +200,6 @@ int main(){
   Orbit O1;
   Orbit O2;
 
-  O1 = findOrbitOutbound(desired_rl, desired_ta, thetaFL);
-
-
-
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
   for(int c = 0; c< 10; c++){
     O1 = findOrbit(desired_rl, desired_ta, thetaFL);
