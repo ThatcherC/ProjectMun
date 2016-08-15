@@ -59,6 +59,8 @@ void setParamters(){
 }
 
 
+//Calculates the shape (a, e) of an orbit that satisfies the arguments
+//Works for both inbound and outbound
 Orbit getOrbit(double rl, vmml::vector<3,double> Rt, double theta){
   Orbit out;
 
@@ -88,7 +90,9 @@ Orbit getOrbit(double _rl, MunIntercept intercept){
 }
 */
 
-//This function is very likely known to work
+//This function is very likely known to work for outbound
+//Returns the position and velocity conditions at the Munar patch point
+//Assumes an outbound trajectory
 MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, double angle){
   vmml::vector<3,double> Rtm;
   vmml::vector<3,double> Vt;
@@ -110,8 +114,10 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
   //Step 2:
   //Find R_tm and V_tm - already have Rtm
 
+  //This might be adaptable if angle -> 2*PI-angle
+  //Comes from IttMaMoA pg. 445
   Vt = 1.0/rt * (sqrt(muKerbin/traj.p)*traj.e*sin(angle)*Rt + sqrt(muKerbin*traj.p)/rt * i.cross(Rt) );
-  Vtm = Vt-munVelocity(desired_ta);
+  Vtm = Vt-munVelocity(toa);
 
   intercept.Rt = Rt;
   intercept.Rtm = Rtm;
