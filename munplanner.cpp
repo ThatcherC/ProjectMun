@@ -156,6 +156,8 @@ Orbit findOrbit(double periapsis, double toa, double angle, int situation){
   return O1;
 }
 
+
+
 double getMunSOItime(double v){
   double a_h = 1.0/(v*v/muMun - 2.0/munSOI);
   //What is rm? desired_rm?? Check section 9.1
@@ -173,6 +175,46 @@ double getMunRm(MunIntercept munBound, MunIntercept earthBound){
   return a_h * (1.0/sin(nu) - 1);
 }
 
+//Calculates orbits that satisfy the laws of physics and returns the Mun periapsis
+double findConsistentOrbits(double thetaFL){
+  Orbit O1;
+  Orbit O2;
+
+  O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
+
+  //Step 4: Get ToF through Mun SOI
+  //Need Vtm and Rtm
+  double tSOI = getMunSOItime(O1.intercept.Vtm.length());
+  //printf("Mun SOI time: %f\n", tSOI);
+
+  //Step 6: Vary t_fr so that Munar entry and exit velocities match
+  double thetaFR = 3.1;
+  for(int x = 0; x< 10; x++){
+
+    //Step 5: find return orbit
+    O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
+    //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+
+    if(abs(O1.intercept.Vtm.length()-O2.intercept.Vtm.length())<20){
+      break;
+    }
+
+    thetaFR -= .1;
+  }
+
+  //printf("Iteratively matching entry and exit speeds:\n");
+  for(int x = 0; x < 4; x++){
+    double deriv = (findOrbit(desired_rr, desired_ta+tSOI, thetaFR+0.001, INBOUND).intercept.Vtm.length()-O2.intercept.Vtm.length())/0.001;
+
+    thetaFR = thetaFR + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
+    O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
+
+    //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+  }
+
+  return getMunRm(O1.intercept, O2.intercept);
+}
+
 void printVector(vmml::vector<3,double> v){
   printf("x: %f   y: %f\n", v[0], v[1]);
 }
@@ -188,58 +230,42 @@ int main(){
 
   //Estimate for burnout-Mun angle
   double thetaFL = 2.9;
-  double thetaFR = 3.1;
-  Orbit O1;
-  Orbit O2;
+  //double thetaFR = 3.1;
+  double RMthreshold = 50000;
 
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
-  for(int c = 0; c< 1; c++){
-    O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
-
-    //Step 4: Get ToF through Mun SOI
-    //Need Vtm and Rtm
-    double tSOI = getMunSOItime(O1.intercept.Vtm.length());
-    printf("Mun SOI time: %f\n", tSOI);
-
-    //Step 6: Vary t_fr so that Munar entry and exit velocities match
-    for(int x = 0; x< 10; x++){
-
-      //Step 5: find return orbit
-      //findOrbit will need some modifications to accomodate a return trajectory
-      O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
-      printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
-
-      if(abs(O1.intercept.Vtm.length()-O2.intercept.Vtm.length())<20){
-        break;
-      }
-
-      thetaFR -= .1;
+  //Limit on this is currently optimized-ish to 100km, 35km, 10km target
+  for(int c = 0; c< 30; c++){
+    double rm = findConsistentOrbits(thetaFL);
+    printf("ThetaFL: %f      Calculated RM: %f\n", thetaFL, rm);
+    if(abs(rm-desired_rm) < RMthreshold){
+      break;
     }
 
-    printf("Iteratively matching entry and exit speeds:\n");
-    for(int x = 0; x < 4; x++){
-      double deriv = (findOrbit(desired_rr, desired_ta+tSOI, thetaFR+0.001, INBOUND).intercept.Vtm.length()-O2.intercept.Vtm.length())/0.001;
+    thetaFL -= 0.01;
+  }
 
-      thetaFR = thetaFR + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
-      O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
+  //Time to do a Newton's method on thetaFL
+  for(int x = 0; x < 4; x++){
+    double rm = findConsistentOrbits(thetaFL);
+    double deriv = (findConsistentOrbits(thetaFL+0.001)-rm)/0.001;
 
-      printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
-    }
+    thetaFL = thetaFL + (desired_rm-rm)/deriv;
+    //O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
 
-
-    printf("Calculated R_m: %f\n\n", getMunRm(O1.intercept, O2.intercept));
+    printf("RM Desired: %f   RM Calculated: %f\n", rm, desired_rm);
   }
 
 
   printf("\n-------Results:--------\n");
-
+/*
   printf("a: %f\n", O1.a);
   printf("e: %f\n", O1.e);
   printf("AoP: %f\n", O1.aop+2*pi);
   printf("ToP: %f\n", O1.time);
   printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O1.a)));
   printf("\nrun tothemun(%f, %f, %f).\n\n",O1.a,O1.aop+2*pi,O1.time);
-
+*/
   printf("\n");
   return 0;
 }
