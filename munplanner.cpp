@@ -269,20 +269,18 @@ int main(){
   }
 
   Orbit outbound = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
+
+  
+
+
   printf("\n-------Results:--------\n");
 
   printf("a: %f\n", outbound.a);
   printf("e: %f\n", outbound.e);
   printf("AoP: %f (%f°)\n", outbound.aop, outbound.aop*180/pi);
-  printf("ThetaFL: %f (%f°)\n", thetaFL, thetaFL*180/pi);
   printf("Outbound TFL: %f\n", getOutboundTFL(outbound,thetaFL));
-  printf("Time of Arrival: %f\n", desired_ta);
   printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/outbound.a)));
   printf("\nrun tothemun(%f, %f, %f).\n\n",outbound.a,outbound.aop,desired_ta-getOutboundTFL(outbound,thetaFL));
-
-  double smallAngle = acos( outbound.intercept.Rt.dot(munPosition(desired_ta)) / (outbound.intercept.Rt.length()*munAltitude) );
-  printf("Small angle: %f\n",smallAngle);
-
 
   printf("\n");
   return 0;
