@@ -256,16 +256,16 @@ int main(){
     printf("RM Desired: %f   RM Calculated: %f\n", rm, desired_rm);
   }
 
-
+  Orbit outbound = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
   printf("\n-------Results:--------\n");
-/*
-  printf("a: %f\n", O1.a);
-  printf("e: %f\n", O1.e);
-  printf("AoP: %f\n", O1.aop+2*pi);
-  printf("ToP: %f\n", O1.time);
-  printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O1.a)));
-  printf("\nrun tothemun(%f, %f, %f).\n\n",O1.a,O1.aop+2*pi,O1.time);
-*/
+
+  printf("a: %f\n", outbound.a);
+  printf("e: %f\n", outbound.e);
+  printf("AoP: %f\n", outbound.aop+2*pi);
+  printf("ToP: %f\n", outbound.time);
+  printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/outbound.a)));
+  printf("\nrun tothemun(%f, %f, %f).\n\n",outbound.a,outbound.aop+2*pi,outbound.time);
+
   printf("\n");
   return 0;
 }
