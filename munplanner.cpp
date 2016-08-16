@@ -218,11 +218,13 @@ double findConsistentOrbits(double thetaFL){
   return getMunRm(O1.intercept, O2.intercept);
 }
 
-//Where did this equation for E come from??
-double getOutboundTFL(Orbit orbit, double angle){
-  double E = acos((orbit.e + cos(angle)) / (1+orbit.e*cos(angle)));
 
-  return sqrt(orbit.a*orbit.a*orbit.a/muKerbin)*(E * orbit.e*sin(E));
+double getOutboundTFL(Orbit orbit, double angle){
+  double e = orbit.e;
+  double E = acos( (e + cos(angle)) / (1+e*cos(angle)) );
+
+  //Here there was a bug! I squashed it. the '-' used to be a '*'!
+  return sqrt(orbit.a*orbit.a*orbit.a/muKerbin)*(E - e*sin(E));
 }
 
 void printVector(vmml::vector<3,double> v){
