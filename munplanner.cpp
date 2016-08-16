@@ -72,23 +72,6 @@ Orbit getOrbit(double rl, vmml::vector<3,double> Rt, double theta){
 
   return out;
 }
-/*
-//Returns a fully specified orbit with the time of periapsis and burn
-//Only works for zero inclination orbits.
-Orbit getOrbit(double _rl, MunIntercept intercept){
-  Orbit out;
-
-  out.a = 1.0/(-intercept.Vt.dot(intercept.Vt)/muKerbin + 2/intercept.Rt.length());
-  out.e = 1-_rl/out.a;                     //eccentricity
-  out.p = out.a*(1-out.e*out.e);
-
-  out.aop = atan2(intercept.Rt[1],intercept.Rt[0])-intercept.theta;
-
-  out.time = intercept.toa-intercept.tfl;
-
-  return out;
-}
-*/
 
 //This function is very likely known to work for outbound
 //Returns the position and velocity conditions at the Munar patch point
