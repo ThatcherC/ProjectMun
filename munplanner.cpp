@@ -32,29 +32,29 @@ void setParamters(){
 
   int p = 0;
 
-  //printf("Time of arrival (y:d:h:m:s): ");
-  //scanf("%d:%d:%d:%d:%d", &toa[0], &toa[1], &toa[2], &toa[3], &toa[4]);
+  printf("Time of arrival (y:d:h:m:s):  ");
+  scanf("%d:%d:%d:%d:%d", &toa[0], &toa[1], &toa[2], &toa[3], &toa[4]);
 
   printf("Initial Kerbin periapsis (m): ");
   scanf("%d",&p);
   desired_rl = (double)p+kerbinRadius;
 
-  printf("Kerbin return periapsis (m): ");
+  printf("Kerbin return periapsis (m):  ");
   scanf("%d",&p);
   desired_rr = (double)p+kerbinRadius;
 
-  printf("Mun periapsis (m): ");
+  printf("Mun periapsis (m):            ");
   scanf("%d", &p);
   desired_rm = (double)p+munRadius;
 
-  /*
+
   toa[0] = toa[0]-1;
   toa[1] = toa[1]-1;
   for(int i = 0; i < 5; i++){
     desired_ta += toSeconds[i] * toa[i];
   }
-  */
-  desired_ta = 0;
+
+  //desired_ta = 0;
   printf("\n----------------------------\n");
 }
 
@@ -68,7 +68,10 @@ Orbit getOrbit(double rl, vmml::vector<3,double> Rt, double theta){
   out.e = 1-rl/out.a;                     //eccentricity
   out.p = out.a*(1-out.e*out.e);
 
-  out.aop = atan2(Rt[1],Rt[0])-theta;
+  //find angle between between Rt and Mun's center, and add that to munAngle
+  vmml::vector<3,double> munPos = munPosition(desired_ta);
+  double smallAngle = acos( Rt.dot(munPos) / (Rt.length()*munAltitude) );
+  out.aop = munAngle(desired_ta)+smallAngle-theta;;
 
   return out;
 }
@@ -215,6 +218,13 @@ double findConsistentOrbits(double thetaFL){
   return getMunRm(O1.intercept, O2.intercept);
 }
 
+//Where did this equation for E come from??
+double getOutboundTFL(Orbit orbit, double angle){
+  double E = acos((orbit.e + cos(angle)) / (1+orbit.e*cos(angle)));
+
+  return sqrt(orbit.a*orbit.a*orbit.a/muKerbin)*(E * orbit.e*sin(E));
+}
+
 void printVector(vmml::vector<3,double> v){
   printf("x: %f   y: %f\n", v[0], v[1]);
 }
@@ -237,8 +247,8 @@ int main(){
   //Limit on this is currently optimized-ish to 100km, 35km, 10km target
   for(int c = 0; c< 30; c++){
     double rm = findConsistentOrbits(thetaFL);
-    printf("ThetaFL: %f      Calculated RM: %f\n", thetaFL, rm);
     if(abs(rm-desired_rm) < RMthreshold){
+      printf("ThetaFL: %f      Calculated RM: %f\n", thetaFL, rm);
       break;
     }
 
@@ -253,7 +263,7 @@ int main(){
     thetaFL = thetaFL + (desired_rm-rm)/deriv;
     //O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
 
-    printf("RM Desired: %f   RM Calculated: %f\n", rm, desired_rm);
+    //printf("RM Desired: %f   RM Calculated: %f\n", rm, desired_rm);
   }
 
   Orbit outbound = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
@@ -261,10 +271,16 @@ int main(){
 
   printf("a: %f\n", outbound.a);
   printf("e: %f\n", outbound.e);
-  printf("AoP: %f\n", outbound.aop+2*pi);
-  printf("ToP: %f\n", outbound.time);
+  printf("AoP: %f (%f°)\n", outbound.aop, outbound.aop*180/pi);
+  printf("ThetaFL: %f (%f°)\n", thetaFL, thetaFL*180/pi);
+  printf("Outbound TFL: %f\n", getOutboundTFL(outbound,thetaFL));
+  printf("Time of Arrival: %f\n", desired_ta);
   printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/outbound.a)));
-  printf("\nrun tothemun(%f, %f, %f).\n\n",outbound.a,outbound.aop+2*pi,outbound.time);
+  printf("\nrun tothemun(%f, %f, %f).\n\n",outbound.a,outbound.aop,desired_ta-getOutboundTFL(outbound,thetaFL));
+
+  double smallAngle = acos( outbound.intercept.Rt.dot(munPosition(desired_ta)) / (outbound.intercept.Rt.length()*munAltitude) );
+  printf("Small angle: %f\n",smallAngle);
+
 
   printf("\n");
   return 0;
