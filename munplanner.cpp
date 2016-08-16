@@ -160,7 +160,7 @@ Orbit findOrbit(double periapsis, double toa, double angle, int situation){
     I1 = getIntercept(periapsis, RtGuess, toa, angle, situation);
 
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
-    printf("Phi: %f  R_a: %f\n", phi, Ra.length());
+    //printf("Phi: %f  R_a: %f\n", phi, Ra.length());
     if(Ra.length()<RAguessingThreshold){
       break;
     }
@@ -168,7 +168,7 @@ Orbit findOrbit(double periapsis, double toa, double angle, int situation){
 
   //TODO: This might be wayyy to many iterations
   for(int x=0; x<14; x++){
-    printf("%d: Ra = %f\n",x,Ra.length());
+    //printf("%d: Ra = %f\n",x,Ra.length());
     I1.Rt = munPosition(toa) - munSOI * I1.Vtm/I1.Vtm.length();
     I1 = getIntercept(periapsis, I1.Rt, toa, angle, situation);
     Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
@@ -210,21 +210,22 @@ int main(){
   setParamters();
 
   //Estimate for burnout-Mun angle
-  double thetaFL = 3.0;
-  double thetaFR = 2.5;
+  double thetaFL = 2.9;
+  double thetaFR = 3.1;
   Orbit O1;
   Orbit O2;
 
+  /*
   O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
   printVector(O1.intercept.Vtm);
   printf("\n Return Orbit: \n");
   O2 = findOrbit(desired_rr, desired_ta+10000, thetaFR, INBOUND);
   printVector(O2.intercept.Vtm);
+  */
 
-  /*
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
-  for(int c = 0; c< 10; c++){
-    O1 = findOrbit(desired_rl, desired_ta, thetaFL);
+  for(int c = 0; c< 1; c++){
+    O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
 
     //Step 4: Get ToF through Mun SOI
     //Need Vtm and Rtm
@@ -236,28 +237,30 @@ int main(){
 
       //Step 5: find return orbit
       //findOrbit will need some modifications to accomodate a return trajectory
-      O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
-      //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+      O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
+      printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
 
       if(abs(O1.intercept.Vtm.length()-O2.intercept.Vtm.length())<20){
         break;
       }
 
-      t_fr += 1200;
+      thetaFR -= .1;
     }
+
+    printf("Iteratively matching entry and exit speeds:\n");
     for(int x = 0; x < 4; x++){
-      double deriv = findOrbit(desired_rr, desired_ta+tSOI, t_fr+1).intercept.Vtm.length()-O2.intercept.Vtm.length();
+      double deriv = (findOrbit(desired_rr, desired_ta+tSOI, thetaFR+0.001, INBOUND).intercept.Vtm.length()-O2.intercept.Vtm.length())/0.001;
 
-      t_fr = t_fr + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
-      O2 = findOrbit(desired_rr, desired_ta+tSOI, t_fr);
+      thetaFR = thetaFR + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
+      O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
 
-      //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
+      printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
     }
+
 
     printf("Calculated R_m: %f\n\n", getMunRm(O1.intercept, O2.intercept));
   }
 
-*/
 
   printf("\n-------Results:--------\n");
 
