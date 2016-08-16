@@ -105,7 +105,7 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
   //Choose an r_T and a t_F, then find the trajectory
   Rtm = Rt - munPosition(toa);
 
-  double rt = Rt.length();                                       //arbitrary rt
+  double rt = Rt.length();
 
   traj = getOrbit(rl,Rt,angle);
 
@@ -113,8 +113,6 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
 
   //Step 2:
   //Find R_tm and V_tm - already have Rtm
-
-  //This might be adaptable if angle -> 2*PI-angle [true assuming we want hit a periapsis, which we do]
   //Comes from IttMaMoA pg. 445
 
   //should change angle for inbound orbits
@@ -136,10 +134,6 @@ MunIntercept getIntercept(double rl, vmml::vector<3,double> Rt, double toa, doub
 }
 
 //Returns an orbit from Kerbin to Mun ending in the Mun's center
-//TODO: Adapt for inbound
-/*      - Change phi limits
-        -
-*/
 Orbit findOrbit(double periapsis, double toa, double angle, int situation){
   MunIntercept I1;
   vmml::vector<3,double> Ra;
@@ -214,14 +208,6 @@ int main(){
   double thetaFR = 3.1;
   Orbit O1;
   Orbit O2;
-
-  /*
-  O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
-  printVector(O1.intercept.Vtm);
-  printf("\n Return Orbit: \n");
-  O2 = findOrbit(desired_rr, desired_ta+10000, thetaFR, INBOUND);
-  printVector(O2.intercept.Vtm);
-  */
 
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
   for(int c = 0; c< 1; c++){
