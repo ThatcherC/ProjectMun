@@ -262,7 +262,7 @@ int main(){
   for(int c = 0; c< 30; c++){
     O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
     double rm = getMunRm(O1.intercept, findConsistentOrbits(thetaFL).intercept);
-    
+
     if(abs(rm-desired_rm) < RMthreshold){
       printf("ThetaFL: %f      Calculated RM: %f\n", thetaFL, rm);
       break;
@@ -287,10 +287,12 @@ int main(){
     //printf("RM Desired: %f   RM Calculated: %f\n", rm, desired_rm);
   }
 
-  Orbit outbound = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
+  O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
+  O2 = findConsistentOrbits(thetaFL);
+  printf("Ra: %f", getMunRa(O1.intercept, O2.intercept));
 
 
-
+  /*
 
   printf("\n-------Results:--------\n");
 
@@ -301,6 +303,6 @@ int main(){
   printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/outbound.a)));
   printf("\nrun tothemun(%f, %f, %f).\n\n",outbound.a,outbound.aop,desired_ta-getOutboundTFL(outbound,thetaFL));
 
-  printf("\n");
+  printf("\n");*/
   return 0;
 }
