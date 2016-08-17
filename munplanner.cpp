@@ -239,7 +239,7 @@ double getOutboundTFL(Orbit orbit, double angle){
 }
 
 void printVector(vmml::vector<3,double> v){
-  printf("x: %f   y: %f\n", v[0], v[1]);
+  printf("{x: %f   y: %f}\n", v[0], v[1]);
 }
 
 vmml::vector<3,double> rotateVector(vmml::vector<3,double> v, double theta){
