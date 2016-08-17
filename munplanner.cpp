@@ -22,6 +22,8 @@ double desired_ir = 0;
 double desired_rl;      //Kerbin periapsis outbound
 double desired_rr;      //Kerbin periapsis inbound
 
+double thetaFL;         //Outbound and inbound angles
+double thetaFR;
 
 
 void setParamters(){
@@ -200,7 +202,7 @@ Orbit findConsistentOrbits(double thetaFL){
   //printf("Mun SOI time: %f\n", tSOI);
 
   //Step 6: Vary t_fr so that Munar entry and exit velocities match
-  double thetaFR = 3.1;
+  thetaFR = 3.1;
   for(int x = 0; x< 10; x++){
 
     //Step 5: find return orbit
@@ -240,6 +242,13 @@ void printVector(vmml::vector<3,double> v){
   printf("x: %f   y: %f\n", v[0], v[1]);
 }
 
+vmml::vector<3,double> rotateVector(vmml::vector<3,double> v, double theta){
+  vmml::vector<3,double> out (0,0,0);
+  out[0] = cos(theta)*v[0]-sin(theta)*v[1];
+  out[1] = sin(theta)*v[0]+cos(theta)*v[1];
+  return out;
+}
+
 //X_y, Xy : vector
 //x_y, xy : magnitude of same vector
 
@@ -253,8 +262,7 @@ int main(){
   Orbit O2;
 
   //Estimate for burnout-Mun angle
-  double thetaFL = 2.9;
-  //double thetaFR = 3.1;
+  thetaFL = 2.9;
   double RMthreshold = 50000;
 
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
@@ -287,22 +295,38 @@ int main(){
     //printf("RM Desired: %f   RM Calculated: %f\n", rm, desired_rm);
   }
 
+  printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
   O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
   O2 = findConsistentOrbits(thetaFL);
-  printf("Ra: %f", getMunRa(O1.intercept, O2.intercept));
+  double ra = getMunRa(O1.intercept, O2.intercept);
+  printf("Ra: %f\n", ra);
+  printf("Moving patch position vectors... ");
+  double angle = ra/munSOI;
+  //Have to rotate Rtms! Not Rts!
+  O1.intercept.Rtm = rotateVector(O1.intercept.Rtm, -angle);
+  O2.intercept.Rtm = rotateVector(O2.intercept.Rtm, angle);
+
+  printf("Recalculating intercept\n");
+  MunIntercept O1intercept = getIntercept(desired_rl, O1.intercept.Rtm+munPosition(desired_ta), desired_ta, thetaFL, OUTBOUND);
+  double tSOI = getMunSOItime(O1intercept.Vtm.length());
+  MunIntercept O2intercept = getIntercept(desired_rr, O2.intercept.Rtm+munPosition(desired_ta+tSOI), desired_ta+tSOI, thetaFR, INBOUND);
+  O1 = getOrbit(desired_rl, O1intercept.Rt, thetaFL);
+  O2 = getOrbit(desired_rr, O2intercept.Rt, thetaFR);
+  O1.intercept = O1intercept;
+  O2.intercept = O2intercept;
+  printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
 
 
-  /*
 
   printf("\n-------Results:--------\n");
 
-  printf("a: %f\n", outbound.a);
-  printf("e: %f\n", outbound.e);
-  printf("AoP: %f (%f°)\n", outbound.aop, outbound.aop*180/pi);
-  printf("Outbound TFL: %f\n", getOutboundTFL(outbound,thetaFL));
-  printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/outbound.a)));
-  printf("\nrun tothemun(%f, %f, %f).\n\n",outbound.a,outbound.aop,desired_ta-getOutboundTFL(outbound,thetaFL));
+  printf("a: %f\n", O1.a);
+  printf("e: %f\n", O1.e);
+  printf("AoP: %f (%f°)\n", O1.aop, O1.aop*180/pi);
+  printf("O1 TFL: %f\n", getOutboundTFL(O1,thetaFL));
+  printf("v: %f\n",sqrt(muKerbin * (2/desired_rl-1/O1.a)));
+  printf("\nrun tothemun(%f, %f, %f).\n\n",O1.a,O1.aop,desired_ta-getOutboundTFL(O1,thetaFL));
 
-  printf("\n");*/
+  printf("\n");
   return 0;
 }
