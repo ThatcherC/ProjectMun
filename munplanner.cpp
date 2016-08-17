@@ -178,8 +178,17 @@ double getMunRm(MunIntercept munBound, MunIntercept earthBound){
   return a_h * (1.0/sin(nu) - 1);
 }
 
+//Not sure if this is the proper way to do this....
+double getMunRa(MunIntercept munBound, MunIntercept earthBound){
+  double nu = asin( munBound.Vtm.cross(earthBound.Vtm).length() / munBound.Vtm.squared_length())/2;
+  //printf("Deflection angle: %f\n", nu);
+  double a_h = 1.0/(munBound.Vtm.squared_length()/muMun - 2.0/munSOI);
+  //printf("A_h: %f\n", a_h);
+  return a_h * 1.0/tan(nu);
+}
+
 //Calculates orbits that satisfy the laws of physics and returns the Mun periapsis
-double findConsistentOrbits(double thetaFL){
+Orbit findConsistentOrbits(double thetaFL){
   Orbit O1;
   Orbit O2;
 
@@ -214,8 +223,8 @@ double findConsistentOrbits(double thetaFL){
 
     //printf("VTM outbound: %f   VTM inbound: %f\n", O1.intercept.Vtm.length(),O2.intercept.Vtm.length());
   }
-
-  return getMunRm(O1.intercept, O2.intercept);
+  return O2;
+  //return getMunRm(O1.intercept, O2.intercept);
 }
 
 
@@ -240,6 +249,9 @@ int main(){
   printf("\n\nMun Planner v0.1, (June 17, 2016)\n----------------------------\n");
   setParamters();
 
+  Orbit O1;
+  Orbit O2;
+
   //Estimate for burnout-Mun angle
   double thetaFL = 2.9;
   //double thetaFR = 3.1;
@@ -248,7 +260,9 @@ int main(){
   //Step 7: Vary t_fl (and repeat step 6) so that r_m matches desired value
   //Limit on this is currently optimized-ish to 100km, 35km, 10km target
   for(int c = 0; c< 30; c++){
-    double rm = findConsistentOrbits(thetaFL);
+    O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
+    double rm = getMunRm(O1.intercept, findConsistentOrbits(thetaFL).intercept);
+    
     if(abs(rm-desired_rm) < RMthreshold){
       printf("ThetaFL: %f      Calculated RM: %f\n", thetaFL, rm);
       break;
@@ -259,18 +273,23 @@ int main(){
 
   //Time to do a Newton's method on thetaFL
   for(int x = 0; x < 4; x++){
-    double rm = findConsistentOrbits(thetaFL);
-    double deriv = (findConsistentOrbits(thetaFL+0.001)-rm)/0.001;
+    O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
+    O2 = findConsistentOrbits(thetaFL);
+    double rm = getMunRm(O1.intercept, O2.intercept);
+
+    double rm2 = getMunRm(O1.intercept, findConsistentOrbits(thetaFL+0.001).intercept);
+
+    double deriv = (rm2-rm)/0.001;
 
     thetaFL = thetaFL + (desired_rm-rm)/deriv;
-    //O2 = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
+    // = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
 
     //printf("RM Desired: %f   RM Calculated: %f\n", rm, desired_rm);
   }
 
   Orbit outbound = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
 
-  
+
 
 
   printf("\n-------Results:--------\n");
