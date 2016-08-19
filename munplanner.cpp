@@ -149,11 +149,15 @@ Orbit findOrbit(double periapsis, double toa, double angle, int situation){
   }
 
   //TODO: This might be wayyy to many iterations
+  //Forgot to account for the fact that an outbound lunar trajectory will have velocity pointing away from mun!
+  //This was screwing up results for a while
+  double k = 1+situation*-2;
+
   for(int x=0; x<14; x++){
     //printf("%d: Ra = %f\n",x,Ra.length());
-    I1.Rt = munPosition(toa) - munSOI * I1.Vtm/I1.Vtm.length();
+    I1.Rt = munPosition(toa) - k * munSOI * I1.Vtm/I1.Vtm.length();
     I1 = getIntercept(periapsis, I1.Rt, toa, angle, situation);
-    Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
+    //Ra = I1.Rtm - I1.Rtm.dot(I1.Vtm)/I1.Vtm.dot(I1.Vtm) * I1.Vtm;
   }
 
   Orbit O1 = getOrbit(desired_rl, I1.Rt, angle);
@@ -190,11 +194,11 @@ double getMunRa(MunIntercept munBound, MunIntercept earthBound){
 }
 
 //Calculates orbits that satisfy the laws of physics and returns the Mun periapsis
-Orbit findConsistentOrbits(double thetaFL){
+Orbit findConsistentOrbits(double angleFL){
   Orbit O1;
   Orbit O2;
 
-  O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
+  O1 = findOrbit(desired_rl, desired_ta, angleFL, OUTBOUND);
 
   //Step 4: Get ToF through Mun SOI
   //Need Vtm and Rtm
@@ -217,7 +221,8 @@ Orbit findConsistentOrbits(double thetaFL){
   }
 
   //printf("Iteratively matching entry and exit speeds:\n");
-  for(int x = 0; x < 4; x++){
+  //Bumped up number of iterations here to help convergance in main loop
+  for(int x = 0; x < 8; x++){
     double deriv = (findOrbit(desired_rr, desired_ta+tSOI, thetaFR+0.001, INBOUND).intercept.Vtm.length()-O2.intercept.Vtm.length())/0.001;
 
     thetaFR = thetaFR + (O1.intercept.Vtm.length() - O2.intercept.Vtm.length())/deriv;
@@ -239,7 +244,7 @@ double getOutboundTFL(Orbit orbit, double angle){
 }
 
 void printVector(vmml::vector<3,double> v){
-  printf("{x: %f   y: %f}\n", v[0], v[1]);
+  printf("{x: %f, y: %f}\n", v[0], v[1]);
 }
 
 vmml::vector<3,double> rotateVector(vmml::vector<3,double> v, double theta){
@@ -279,8 +284,8 @@ int main(){
     thetaFL -= 0.01;
   }
 
-  //Time to do a Newton's method on thetaFL
-  for(int x = 0; x < 4; x++){
+  //Time to do a Newton's method on thetaFL - extra iterations helped a lot
+  for(int x = 0; x < 20; x++){
     O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
     O2 = findConsistentOrbits(thetaFL);
     double rm = getMunRm(O1.intercept, O2.intercept);
@@ -292,7 +297,7 @@ int main(){
     thetaFL = thetaFL + (desired_rm-rm)/deriv;
     // = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
 
-    //printf("RM Desired: %f   RM Calculated: %f\n", rm, desired_rm);
+    printf("RM Desired: %f   RM Calculated: %f\n", getMunRm(O1.intercept, O2.intercept), desired_rm);
   }
 
   printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
@@ -300,16 +305,26 @@ int main(){
   O2 = findConsistentOrbits(thetaFL);
   double ra = getMunRa(O1.intercept, O2.intercept);
   printf("Ra: %f\n", ra);
-  printf("Moving patch position vectors... ");
+  printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
+
+
+  printf("Moving patch position vectors... \n");
   double angle = ra/munSOI;
-  //Have to rotate Rtms! Not Rts!
+
+  printVector(O1.intercept.Rtm);
+  printVector(O2.intercept.Rtm);
+
   O1.intercept.Rtm = rotateVector(O1.intercept.Rtm, -angle);
   O2.intercept.Rtm = rotateVector(O2.intercept.Rtm, angle);
+
+  printVector(O1.intercept.Rtm);
+  printVector(O2.intercept.Rtm);
 
   printf("Recalculating intercept\n");
   MunIntercept O1intercept = getIntercept(desired_rl, O1.intercept.Rtm+munPosition(desired_ta), desired_ta, thetaFL, OUTBOUND);
   double tSOI = getMunSOItime(O1intercept.Vtm.length());
   MunIntercept O2intercept = getIntercept(desired_rr, O2.intercept.Rtm+munPosition(desired_ta+tSOI), desired_ta+tSOI, thetaFR, INBOUND);
+
   O1 = getOrbit(desired_rl, O1intercept.Rt, thetaFL);
   O2 = getOrbit(desired_rr, O2intercept.Rt, thetaFR);
   O1.intercept = O1intercept;
