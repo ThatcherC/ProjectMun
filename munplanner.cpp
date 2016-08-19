@@ -320,7 +320,7 @@ int main(){
   printVector(O1.intercept.Rtm);
   printVector(O2.intercept.Rtm);
 
-  printf("Recalculating intercept\n");
+  printf("Recalculating interceptss\n");
   MunIntercept O1intercept = getIntercept(desired_rl, O1.intercept.Rtm+munPosition(desired_ta), desired_ta, thetaFL, OUTBOUND);
   double tSOI = getMunSOItime(O1intercept.Vtm.length());
   MunIntercept O2intercept = getIntercept(desired_rr, O2.intercept.Rtm+munPosition(desired_ta+tSOI), desired_ta+tSOI, thetaFR, INBOUND);
