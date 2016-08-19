@@ -254,6 +254,14 @@ vmml::vector<3,double> rotateVector(vmml::vector<3,double> v, double theta){
   return out;
 }
 
+//FUnction used to confirm whether our velocities match KSP's
+void printPolarVelocities(MunIntercept m){
+  double total = m.Vtm.length();
+  double radial = m.Vtm.dot(m.Rtm)/m.Rtm.length();
+  double tangential = sqrt(total*total-radial*radial);
+  printf("Total V: %f  Radial V: %f  Tangential V: %f\n",total, radial,tangential);
+}
+
 //X_y, Xy : vector
 //x_y, xy : magnitude of same vector
 
@@ -311,16 +319,13 @@ int main(){
   printf("Moving patch position vectors... \n");
   double angle = ra/munSOI;
 
-  printVector(O1.intercept.Rtm);
-  printVector(O2.intercept.Rtm);
+  printPolarVelocities(O1.intercept);
+  printPolarVelocities(O2.intercept);
 
   O1.intercept.Rtm = rotateVector(O1.intercept.Rtm, -angle);
   O2.intercept.Rtm = rotateVector(O2.intercept.Rtm, angle);
 
-  printVector(O1.intercept.Rtm);
-  printVector(O2.intercept.Rtm);
-
-  printf("Recalculating interceptss\n");
+  printf("Recalculating intercepts\n");
   MunIntercept O1intercept = getIntercept(desired_rl, O1.intercept.Rtm+munPosition(desired_ta), desired_ta, thetaFL, OUTBOUND);
   double tSOI = getMunSOItime(O1intercept.Vtm.length());
   MunIntercept O2intercept = getIntercept(desired_rr, O2.intercept.Rtm+munPosition(desired_ta+tSOI), desired_ta+tSOI, thetaFR, INBOUND);
@@ -329,6 +334,10 @@ int main(){
   O2 = getOrbit(desired_rr, O2intercept.Rt, thetaFR);
   O1.intercept = O1intercept;
   O2.intercept = O2intercept;
+
+  printPolarVelocities(O1.intercept);
+  printPolarVelocities(O2.intercept);
+
   printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
 
 
