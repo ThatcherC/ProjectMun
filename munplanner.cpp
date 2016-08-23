@@ -193,6 +193,11 @@ double getMunRa(MunIntercept munBound, MunIntercept earthBound){
   return a_h * 1.0/tan(nu);
 }
 
+double getMunRa2(MunIntercept m){
+  vmml::vector<3,double> Ra =  m.Rtm - m.Rtm.dot(m.Vtm)/m.Vtm.dot(m.Vtm)*m.Vtm;
+  return Ra.length();
+}
+
 //Calculates orbits that satisfy the laws of physics and returns the Mun periapsis
 Orbit findConsistentOrbits(double angleFL){
   Orbit O1;
@@ -305,14 +310,15 @@ int main(){
     thetaFL = thetaFL + (desired_rm-rm)/deriv;
     // = findOrbit(desired_rr, desired_ta+tSOI, thetaFR, INBOUND);
 
-    printf("RM Desired: %f   RM Calculated: %f\n", getMunRm(O1.intercept, O2.intercept), desired_rm);
+    //printf("RM Desired: %f   RM Calculated: %f\n", getMunRm(O1.intercept, O2.intercept), desired_rm);
   }
 
   printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
   O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
   O2 = findConsistentOrbits(thetaFL);
   double ra = getMunRa(O1.intercept, O2.intercept);
-  printf("Ra: %f\n", ra);
+  printf("Ra:  %f\n", ra);
+  printf("Ra2: %f\n", getMunRa2(O1.intercept));
   printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
 
 
@@ -335,6 +341,7 @@ int main(){
   O1.intercept = O1intercept;
   O2.intercept = O2intercept;
 
+  printf("Ra2: %f\n", getMunRa2(O1.intercept));
   printPolarVelocities(O1.intercept);
   printPolarVelocities(O2.intercept);
 
