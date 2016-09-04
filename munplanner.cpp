@@ -193,7 +193,7 @@ double getMunRa(MunIntercept munBound, MunIntercept earthBound){
   return a_h * 1.0/tan(nu);
 }
 
-double getMunRa2(MunIntercept m){
+double getTrueMunRa(MunIntercept m){
   vmml::vector<3,double> Ra =  m.Rtm - m.Rtm.dot(m.Vtm)/m.Vtm.dot(m.Vtm)*m.Vtm;
   return Ra.length();
 }
@@ -316,14 +316,16 @@ int main(){
   printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
   O1 = findOrbit(desired_rl, desired_ta, thetaFL, OUTBOUND);
   O2 = findConsistentOrbits(thetaFL);
+
   double ra = getMunRa(O1.intercept, O2.intercept);
-  printf("Ra:  %f\n", ra);
-  printf("Ra2: %f\n", getMunRa2(O1.intercept));
+
+  printf("Planned Ra:  %f\n", ra);
+  printf("True Ra: %f\n", getTrueMunRa(O1.intercept));
   printf("Rm: %f\n", getMunRm(O1.intercept, O2.intercept));
 
 
   printf("Moving patch position vectors... \n");
-  double angle = ra/munSOI;
+  double angle = asin(ra/munSOI);
 
   printPolarVelocities(O1.intercept);
   printPolarVelocities(O2.intercept);
@@ -332,6 +334,8 @@ int main(){
   O2.intercept.Rtm = rotateVector(O2.intercept.Rtm, angle);
 
   printf("Recalculating intercepts\n");
+  //Get new munar intercepts based on rotate Rtms
+  //TODO: make small change in thetaFR and thetaFL based on newly rotate vectors (Rt)
   MunIntercept O1intercept = getIntercept(desired_rl, O1.intercept.Rtm+munPosition(desired_ta), desired_ta, thetaFL, OUTBOUND);
   double tSOI = getMunSOItime(O1intercept.Vtm.length());
   MunIntercept O2intercept = getIntercept(desired_rr, O2.intercept.Rtm+munPosition(desired_ta+tSOI), desired_ta+tSOI, thetaFR, INBOUND);
@@ -341,7 +345,7 @@ int main(){
   O1.intercept = O1intercept;
   O2.intercept = O2intercept;
 
-  printf("Ra2: %f\n", getMunRa2(O1.intercept));
+  printf("True Ra: %f\n", getTrueMunRa(O1.intercept));
   printPolarVelocities(O1.intercept);
   printPolarVelocities(O2.intercept);
 
