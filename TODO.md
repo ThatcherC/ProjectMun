@@ -7,10 +7,10 @@ TODO:
     * depends on handedness of eps2
 - [ ] Calculate exit speed and angle in Kerbin frame
 
-- [ ] refactor the git repo
+- [x] refactor the git repo
 
-- [ ] Relook at autopilots
-- [ ] Provide good documentation for the autopilots
+- [x] Relook at autopilots
+- [x] Provide good documentation for the autopilots
 - [ ] Choose the best orbit selection method for the autopilot - maybe give initial phase angle, like in an early version? maybe that version still exists
 
 - [ ] explore orbits
