@@ -1,9 +1,10 @@
 declare parameter a.
-declare parameter angle.  //angle of periapsis relative to +x
+declare parameter angle.  //angle of periapsis relative to +x in degrees
 declare parameter timeTMI.   //time of insertion burn
 
 run once executenode.
 
+//Not a great implemenation - recursive might not be a great choice
 function mod{     //computes n%d
   parameter n.
   parameter d.
@@ -23,20 +24,20 @@ lock shipangle to ship:orbit:lan+ship:orbit:argumentofperiapsis+ship:orbit:truea
 set waitangle to mod(angle-mod(shipangle,360)+360,360).                                     //in degrees
 set waitangle to waitangle*constant:degtorad.                                               //in radians
 
-print "Warping to proper angle (waiting " + (waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 15) +"s)".
+print "Warping to desired argument of periapsis (waiting " + (waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 15) +"s)".
 
 warpto(time:seconds + waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 10).
 wait waitangle/ship:velocity:orbit:mag*(ship:altitude+kerbin:radius) - 10.
 
 print "...Done".
 
+//Now wait until we're at exactly the right AoP
 print "Desired angle: "+angle.
 print "Current angle: "+mod(shipangle,360).
 wait until mod(shipangle,360)>=angle.
-print "Reached proper angle.".
+print "Reached proper angle.".     //Have now arrived at where the AoP should be
 print "Desired angle: "+angle.
 print "Current angle: "+mod(shipangle,360).
-
 
 set period to ship:orbit:period.
 set TMIwait to timeTMI-time:seconds.
@@ -56,7 +57,6 @@ add node1.
 add node2.
 
 //-------Timing burn----------
-
 print "Warping to timing burn...".
 WARPTO(timeTMI-period-deltaT-30).
 wait until time:seconds>(timeTMI-period-deltaT-30).
@@ -64,16 +64,8 @@ print "...Done".
 
 executenode().
 
-
-
 //-------TMI burn-----------
 
 WARPTO(timeTMI-60).
 
 executenode().
-
-
-//[x] 2. Approach desired periapsis angle
-//[ ] 3. Perform burn so that craft returns to periapsis at t_a-tfl
-//[ ] 4. Wait until periapsis
-//[ ] 5. Burn so that velocity matches calculated value

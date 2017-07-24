@@ -16,7 +16,8 @@ function executenode{
   print "       Engine Isp: "+eng:isp.
 
   set i to eng:isp*9.81.
-  set f to eng:maxthrust/i.
+  set f to eng:maxthrust/i. //TODO notify if thrust limiting is engaged
+                            //TODO turn of thrust limiting if enabled?
 
   set m0 to SHIP:MASS.
   set m2 to m0*constant:e^(-dv/i).
